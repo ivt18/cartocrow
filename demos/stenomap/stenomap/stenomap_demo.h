@@ -47,7 +47,4 @@ class StenomapDemo : public QMainWindow {
 	std::vector<std::shared_ptr<Polygon<Inexact>>> m_obstacles;
 
 	GeometryWidget* m_renderer;
-	QSlider* m_alphaSlider;
-	QLabel* m_alphaLabel;
-	QCheckBox* m_obstacleBox;
 };
