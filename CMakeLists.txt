@@ -11,6 +11,8 @@ project(cartocrow
     HOMEPAGE_URL "https://github.com/tue-alga/cartocrow"
     LANGUAGES CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
 set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
 set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
