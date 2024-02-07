@@ -29,7 +29,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/timer.h"
-#include "cartocrow/stenomap/medialAxis.h"
+#include "cartocrow/stenomap/medial_axis.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/geometry_renderer.h"
@@ -74,13 +74,15 @@ void StenomapDemo::recalculate() {
   // TODO: make sure this works well with medial axis computation implementation once 
   // drawing skeleton is added and feature/feature-points is merged
 
-	/* if (m_medialAxisBox->isChecked()) { */
+	if (m_medialAxisBox->isChecked()) {
     // find/compute medial axis and draw it
-    /* for (const Polygon<Inexact>& p : m_polygons) { */
-    /*   MedialAxisPainting m_painting = MedialAxisPainting(MedialAxis(p)); */
-    /*   m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
-    /* } */
-  /* } */
+    for (const Polygon<Inexact>& p : m_polygons) {
+      MedialAxis med_axis = MedialAxis(p);
+      // TODO: extract SsPtr from med_axis and pass it to painting constructor
+      /* MedialAxisPainting m_painting = MedialAxisPainting(med_axis.iss); */
+      /* m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
+    }
+  }
 }
 
 int main(int argc, char* argv[]) {
