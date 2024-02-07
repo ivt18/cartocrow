@@ -77,8 +77,8 @@ void StenomapDemo::recalculate() {
 	if (m_medialAxisBox->isChecked()) {
     // find/compute medial axis and draw it
     for (const Polygon<Inexact>& p : m_polygons) {
-      MedialAxis med_axis = MedialAxis(p);
-      // TODO: extract SsPtr from med_axis and pass it to painting constructor
+      // TODO: get SsPtr medialAxis from p using medial_axis.h
+      /* MedialAxis med_axis = MedialAxis(p); */
       /* MedialAxisPainting m_painting = MedialAxisPainting(med_axis.iss); */
       /* m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
     }
