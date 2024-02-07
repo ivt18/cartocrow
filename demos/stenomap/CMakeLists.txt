@@ -1,1 +1,1 @@
-add_subdirectory(stenomap)
+add_subdirectory(medial_axis)

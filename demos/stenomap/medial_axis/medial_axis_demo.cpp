@@ -19,7 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "stenomap_demo.h"
+#include "medial_axis_demo.h"
+#include "polygon_painting.h"
+#include "medial_axis_painting.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -65,22 +67,20 @@ StenomapDemo::StenomapDemo() {
 
 void StenomapDemo::recalculate() {
   // draw polygon
-  // TODO: figure out how to draw a simple polygon
-  GeometryRenderer rend;
   for (const Polygon<Inexact>& p : m_polygons) {
-    rend->draw(p);
-    /* GeometryRenderer::draw(p); */
+    m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
   }
 
-	if (m_medialAxisBox->isChecked()) {
+  // TODO: make sure this works well with medial axis computation implementation once 
+  // drawing skeleton is added and feature/feature-points is merged
+
+	/* if (m_medialAxisBox->isChecked()) { */
     // find/compute medial axis and draw it
-    for (const Polygon<Inexact>& p : m_polygons) {
-      MedialAxis medial_axis = MedialAxis(p);
-      rend->draw(medial_axis);
-      /* GeometryRenderer::draw(p); */
-    }
-  }
-
+    /* for (const Polygon<Inexact>& p : m_polygons) { */
+    /*   MedialAxisPainting m_painting = MedialAxisPainting(MedialAxis(p)); */
+    /*   m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
+    /* } */
+  /* } */
 }
 
 int main(int argc, char* argv[]) {
