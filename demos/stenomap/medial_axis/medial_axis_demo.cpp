@@ -19,7 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "stenomap_demo.h"
+#include "medial_axis_demo.h"
+#include "polygon_painting.h"
+#include "medial_axis_painting.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -27,65 +29,58 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/timer.h"
-#include "cartocrow/flow_map/painting.h"
-#include "cartocrow/flow_map/parameters.h"
-#include "cartocrow/flow_map/place.h"
-#include "cartocrow/flow_map/reachable_region_algorithm.h"
-#include "cartocrow/flow_map/spiral_tree.h"
-#include "cartocrow/flow_map/spiral_tree_obstructed_algorithm.h"
-#include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
+#include "cartocrow/stenomap/medialAxis.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
+#include "cartocrow/renderer/geometry_renderer.h"
 
 using namespace cartocrow;
-using namespace cartocrow::flow_map;
 using namespace cartocrow::renderer;
+using namespace cartocrow::medial_axis;
 
 StenomapDemo::StenomapDemo() {
-	setWindowTitle("CartoCrow – Stenomap demo");
+	setWindowTitle("AAACartoCrow – Stenomap demo");
 
-	auto obstacle = std::make_shared<Polygon<Inexact>>();
-	obstacle->push_back(Point<Inexact>(-80.9898989, 50.4545454));
-	obstacle->push_back(Point<Inexact>(-90.5959595, 4.040404));
-	obstacle->push_back(Point<Inexact>(-40.7474747, 30.0303030));
-	obstacle->push_back(Point<Inexact>(-60.5656565, 60.7676767));
-	m_obstacles.push_back(obstacle);
+  // Make simple polygon
+  Polygon<Inexact> polygon;
+	polygon.push_back(Point<Inexact>(80, 50));
+	polygon.push_back(Point<Inexact>(90, 4));
+	polygon.push_back(Point<Inexact>(40, 30));
+	polygon.push_back(Point<Inexact>(60, 60));
+  m_polygons.push_back(polygon);
 
+  // setup renderer
 	m_renderer = new GeometryWidget();
 	m_renderer->setMaxZoom(10);
 	m_renderer->setGridMode(GeometryWidget::GridMode::CARTESIAN);
 	setCentralWidget(m_renderer);
 
-	for (auto place : m_places) {
-		m_renderer->registerEditable(place);
-	}
-	for (auto obstacle : m_obstacles) {
-		m_renderer->registerEditable(obstacle);
-	}
-	connect(m_renderer, &GeometryWidget::edited, [&]() {
+	m_medialAxisBox = new QCheckBox("Compute with obstacles");
+	connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
 		recalculate();
 	});
-	recalculate();
+	QToolBar* toolBar = new QToolBar();
+	toolBar->addWidget(m_medialAxisBox);
+
+  recalculate();
 }
 
 void StenomapDemo::recalculate() {
-	Timer t;
-  auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
-	t.stamp("Constructing polygon");
+  // draw polygon
+  for (const Polygon<Inexact>& p : m_polygons) {
+    m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
+  }
 
-  for (auto obstacle : m_obstacles) {
-		tree->addObstacle(*obstacle);
-	}
+  // TODO: make sure this works well with medial axis computation implementation once 
+  // drawing skeleton is added and feature/feature-points is merged
 
-	m_renderer->clear();
-
-	t.output();
-
-	Painting::Options options;
-	auto painting = std::make_shared<Painting>(nullptr, tree, options);
-	m_renderer->addPainting(painting, "Polygon");
-
-	m_renderer->update();
+	/* if (m_medialAxisBox->isChecked()) { */
+    // find/compute medial axis and draw it
+    /* for (const Polygon<Inexact>& p : m_polygons) { */
+    /*   MedialAxisPainting m_painting = MedialAxisPainting(MedialAxis(p)); */
+    /*   m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
+    /* } */
+  /* } */
 }
 
 int main(int argc, char* argv[]) {
