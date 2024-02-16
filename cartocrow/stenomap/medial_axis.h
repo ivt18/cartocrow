@@ -46,7 +46,7 @@ template<typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>
 class MedialAxis {
   private:
     // pointer to interior straight skeleton
-    SsPtr iss = NULL;
+    SsPtr iss;
     // adjacency list
     AdjacencyList<Inexact> graph;
 
@@ -54,7 +54,7 @@ class MedialAxis {
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
     // Prints medial axis to IO
-    void PrintMedialAxis();
+    void print_medial_axis();
     // Adds vertex to the adjacency list
     void add_vertex(const Point<Inexact>& s);
     // Adds edge to the adjacency list

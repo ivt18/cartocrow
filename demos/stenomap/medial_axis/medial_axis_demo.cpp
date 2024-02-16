@@ -43,10 +43,18 @@ StenomapDemo::StenomapDemo() {
 
   // Make simple polygon
   Polygon<Inexact> polygon;
-	polygon.push_back(Point<Inexact>(80, 50));
+	/* polygon.push_back(Point<Inexact>(80, 50));
 	polygon.push_back(Point<Inexact>(90, 4));
 	polygon.push_back(Point<Inexact>(40, 30));
-	polygon.push_back(Point<Inexact>(60, 60));
+	polygon.push_back(Point<Inexact>(60, 60)); */
+  polygon.push_back( Point<Inexact>(-1,-1) ) ;
+  polygon.push_back( Point<Inexact>(0,-12) ) ;
+  polygon.push_back( Point<Inexact>(1,-1) ) ;
+  polygon.push_back( Point<Inexact>(12,0) ) ;
+  polygon.push_back( Point<Inexact>(1,1) ) ;
+  polygon.push_back( Point<Inexact>(0,12) ) ;
+  polygon.push_back( Point<Inexact>(-1,1) ) ;
+  polygon.push_back( Point<Inexact>(-12,0) ) ;
   m_polygons.push_back(polygon);
 
   // setup renderer

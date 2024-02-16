@@ -40,13 +40,15 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::print_adjacency_list() {
+        std::cout << "Printing adjacency list..." << std::endl;
         for (const auto& pair : graph) {
-            std::cout << "Vertex " << pair.first << " adjacency list:\n";
+            std::cout << "Vertex (" << pair.first << ") adjacency list:\n";
             for (const auto& neighbor : pair.second) {
-                std::cout << "\t" << neighbor << "\n";
+                std::cout << "\t(" << neighbor << ")\n";
             }
             std::cout << std::endl;
         }
+        std::cout << "Finished printing adjacency list!" << std::endl;
     }
 
     MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
@@ -56,9 +58,15 @@ namespace cartocrow::medial_axis {
         // TODO: maybe make a separate function to just compute this skeleton,
         // and call it in the constructor
         // TODO: maybe even put this under the Polygon class?
-        iss = CGAL::create_interior_straight_skeleton_2(shape.vertices_begin(), shape.vertices_end());
+        iss = CGAL::create_interior_straight_skeleton_2(shape);
+        if (!iss) {
+            std::cout << "Failed creating interior straight skeleton." << std::endl;
+            exit(1);
+        }
+        std::cout << "Successfully computed interior straight skeleton." << std::endl;
+
         for (auto halfedge = iss->halfedges_begin(); halfedge != iss->halfedges_end(); ++halfedge) {
-            if (halfedge->is_inner_bisector()) {
+            if (halfedge->is_bisector()) {
                 Point<Inexact> t = halfedge->vertex()->point();
                 Point<Inexact> s = halfedge->opposite()->vertex()->point();
                 add_edge(s, t);
@@ -66,7 +74,7 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    void MedialAxis::PrintMedialAxis() {
+    void MedialAxis::print_medial_axis() {
         assert(iss != NULL);
         CGAL::Straight_skeletons_2::IO::print_straight_skeleton(*iss);
     }
