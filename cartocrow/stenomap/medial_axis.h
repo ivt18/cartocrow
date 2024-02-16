@@ -6,7 +6,7 @@
 #include <CGAL/Straight_skeleton_2/IO/print.h>
 #include <CGAL/draw_straight_skeleton_2.h>
 
-namespace cartocrow::tree {
+/* namespace cartocrow::tree {
 
 // TODO: put this somewhere else
 class TreeNode {
@@ -34,7 +34,7 @@ class Tree {
         TreeNode get_root();
 };
 
-}
+} */
 
 // TODO: properly define all of this
 namespace cartocrow::medial_axis {
@@ -47,8 +47,6 @@ class MedialAxis {
   private:
     // pointer to interior straight skeleton
     SsPtr iss = NULL;
-    // tree structure
-    cartocrow::tree::Tree tree;
     // adjacency list
     AdjacencyList<Inexact> graph;
 

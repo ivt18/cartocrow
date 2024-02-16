@@ -11,6 +11,7 @@ target_link_libraries(
     PRIVATE
     ${COMMON_CLA_TARGET}
     core
+    stenomap
     flow_map
     renderer
     CGAL::CGAL

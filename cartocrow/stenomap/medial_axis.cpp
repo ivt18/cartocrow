@@ -1,6 +1,6 @@
 #include "medial_axis.h"
 
-namespace cartocrow::tree {
+/* namespace cartocrow::tree {
 
     TreeNode::TreeNode(const Point<Inexact>& v) {
         vertex = v;
@@ -21,7 +21,7 @@ namespace cartocrow::tree {
     TreeNode Tree::get_root() {
         return root;
     }
-} // namespace cartocrow::tree
+} // namespace cartocrow::tree */
 
 namespace cartocrow::medial_axis {
 
