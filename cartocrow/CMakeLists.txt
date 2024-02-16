@@ -14,6 +14,7 @@ add_subdirectory(core)
 add_subdirectory(renderer)
 add_subdirectory(necklace_map)
 add_subdirectory(simplification)
+add_subdirectory(stenomap)
 add_subdirectory(flow_map)
 
 add_library(cartocrow_lib INTERFACE)

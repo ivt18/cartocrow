@@ -63,6 +63,9 @@ StenomapDemo::StenomapDemo() {
 	toolBar->addWidget(m_medialAxisBox);
 
   recalculate();
+
+  MedialAxis ma(polygon);
+  ma.print_adjacency_list();
 }
 
 void StenomapDemo::recalculate() {
