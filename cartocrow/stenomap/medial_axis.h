@@ -3,7 +3,6 @@
 
 #include "../core/core.h"
 #include <CGAL/create_straight_skeleton_2.h>
-#include <CGAL/Straight_skeleton_2/IO/print.h>
 #include <CGAL/draw_straight_skeleton_2.h>
 
 /* namespace cartocrow::tree {
@@ -53,8 +52,6 @@ class MedialAxis {
   public:
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
-    // Prints medial axis to IO
-    void print_medial_axis();
     // Adds vertex to the adjacency list
     void add_vertex(const Point<Inexact>& s);
     // Adds edge to the adjacency list

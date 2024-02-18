@@ -74,9 +74,4 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    void MedialAxis::print_medial_axis() {
-        assert(iss != NULL);
-        CGAL::Straight_skeletons_2::IO::print_straight_skeleton(*iss);
-    }
-
 } // namespace cartocrow::medial_axis
