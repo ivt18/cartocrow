@@ -5,8 +5,6 @@
 #include "cartocrow/renderer/geometry_renderer.h"
 
 #include <CGAL/create_straight_skeleton_2.h>
-#include <CGAL/Straight_skeleton_2/IO/print.h>
-#include <CGAL/draw_straight_skeleton_2.h>
 
 using namespace cartocrow;
 typedef CGAL::Straight_skeleton_2<Inexact> Ss;
