@@ -3,7 +3,6 @@
 
 #include "../core/core.h"
 #include <CGAL/create_straight_skeleton_2.h>
-#include <CGAL/draw_straight_skeleton_2.h>
 
 /* namespace cartocrow::tree {
 
