@@ -39,69 +39,72 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::medial_axis;
 
 StenomapDemo::StenomapDemo() {
-	setWindowTitle("AAACartoCrow – Stenomap demo");
+    setWindowTitle("CartoCrow – Stenomap demo");
 
+    // Make simple polygon
+    Polygon<Inexact> polygon;
+    /* polygon.push_back(Point<Inexact>(80, 50));
+    polygon.push_back(Point<Inexact>(90, 4));
+    polygon.push_back(Point<Inexact>(40, 30));
+    polygon.push_back(Point<Inexact>(60, 60)); */
+    polygon.push_back( Point<Inexact>(-1,-1) ) ;
+    polygon.push_back( Point<Inexact>(0,-12) ) ;
+    polygon.push_back( Point<Inexact>(1,-1) ) ;
+    polygon.push_back( Point<Inexact>(12,0) ) ;
+    polygon.push_back( Point<Inexact>(1,1) ) ;
+    polygon.push_back( Point<Inexact>(0,12) ) ;
+    polygon.push_back( Point<Inexact>(-1,1) ) ;
+    polygon.push_back( Point<Inexact>(-12,0) ) ;
+    m_polygons.push_back(polygon);
 
+    // setup renderer
+    m_renderer = new GeometryWidget();
+    m_renderer->setMaxZoom(10);
+    m_renderer->setGridMode(GeometryWidget::GridMode::CARTESIAN);
+    setCentralWidget(m_renderer);
 
-  // Make simple polygon
-  Polygon<Inexact> polygon;
-	/* polygon.push_back(Point<Inexact>(80, 50));
-	polygon.push_back(Point<Inexact>(90, 4));
-	polygon.push_back(Point<Inexact>(40, 30));
-	polygon.push_back(Point<Inexact>(60, 60)); */
-  polygon.push_back( Point<Inexact>(-1,-1) ) ;
-  polygon.push_back( Point<Inexact>(0,-12) ) ;
-  polygon.push_back( Point<Inexact>(1,-1) ) ;
-  polygon.push_back( Point<Inexact>(12,0) ) ;
-  polygon.push_back( Point<Inexact>(1,1) ) ;
-  polygon.push_back( Point<Inexact>(0,12) ) ;
-  polygon.push_back( Point<Inexact>(-1,1) ) ;
-  polygon.push_back( Point<Inexact>(-12,0) ) ;
-  m_polygons.push_back(polygon);
+    m_medialAxisBox = new QCheckBox("Compute with obstacles");
+    connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
+        recalculate();
+    });
+    QToolBar* toolBar = new QToolBar();
+    toolBar->addWidget(m_medialAxisBox);
 
-  // setup renderer
-	m_renderer = new GeometryWidget();
-	m_renderer->setMaxZoom(10);
-	m_renderer->setGridMode(GeometryWidget::GridMode::CARTESIAN);
-	setCentralWidget(m_renderer);
-
-	m_medialAxisBox = new QCheckBox("Compute with obstacles");
-	connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-		recalculate();
-	});
-	QToolBar* toolBar = new QToolBar();
-	toolBar->addWidget(m_medialAxisBox);
-
-  recalculate();
+    recalculate();
 
   MedialAxis ma(polygon);
   ma.calculate_weight_function();
   ma.print_adjacency_list();
+    MedialAxis ma(polygon);
+    ma.print_adjacency_list();
+    ma.compute_branches();
+    ma.remove_branch(0);
+    ma.print_adjacency_list();
 }
 
 void StenomapDemo::recalculate() {
-  // draw polygon
-  for (const Polygon<Inexact>& p : m_polygons) {
-    m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
-  }
-
-  // TODO: make sure this works well with medial axis computation implementation once 
-  // drawing skeleton is added and feature/feature-points is merged
-
-	if (m_medialAxisBox->isChecked()) {
-    // find/compute medial axis and draw it
+    // draw polygon
     for (const Polygon<Inexact>& p : m_polygons) {
-      // TODO: get SsPtr medialAxis from p using medial_axis.h
-      /* MedialAxis med_axis = MedialAxis(p); */
-      /* MedialAxisPainting m_painting = MedialAxisPainting(med_axis.iss); */
-      /* m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
+        m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
     }
-  }
+
+    // TODO: make sure this works well with medial axis computation implementation once 
+    // drawing skeleton is added and feature/feature-points is merged
+
+    if (m_medialAxisBox->isChecked()) {
+        // find/compute medial axis and draw it
+        for (const Polygon<Inexact>& p : m_polygons) {
+            // TODO: get SsPtr medialAxis from p using medial_axis.h
+            /* MedialAxis med_axis = MedialAxis(p); */
+            /* MedialAxisPainting m_painting = MedialAxisPainting(med_axis.iss); */
+            /* m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
+        }
+    }
 }
 
 int main(int argc, char* argv[]) {
-	QApplication app(argc, argv);
-	StenomapDemo demo;
-	demo.show();
-	app.exec();
+    QApplication app(argc, argv);
+    StenomapDemo demo;
+    demo.show();
+    app.exec();
 }
