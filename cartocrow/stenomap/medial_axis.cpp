@@ -1,4 +1,5 @@
 #include "medial_axis.h"
+#include <cmath>
 
 /* namespace cartocrow::tree {
 
@@ -37,7 +38,7 @@ namespace cartocrow::medial_axis {
             double radius = std::sqrt(squared_distance);
             double weight_area = M_PI * radius * radius;
             radius_list.insert(std::make_pair(current_point, weight_area));
-            
+        
             std::cout << "Vertex: " << current_point << "has weight: " << squared_distance << std::endl;
         }
     }
