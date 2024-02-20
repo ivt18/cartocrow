@@ -29,6 +29,19 @@ namespace cartocrow::medial_axis {
         graph[s];
     }
 
+    void MedialAxis::calculate_weight_function() {
+        std::cout << "Trying to print pair" << std::endl;   
+        for (const auto& vertex: graph) {
+            const Point<Inexact>& current_point = vertex.first;
+            double squared_distance = CGAL::squared_distance(current_point, polygon);
+            double radius = std::sqrt(squared_distance);
+            double weight_area = M_PI * radius * radius;
+            radius_list.insert(std::make_pair(current_point, weight_area));
+            
+            std::cout << "Vertex: " << current_point << "has weight: " << squared_distance << std::endl;
+        }
+    }
+
     void MedialAxis::add_edge(const Point<Inexact>& s, const Point<Inexact>& t) {
         // Add both vertices to the adjacency list
         add_vertex(s);
@@ -51,9 +64,11 @@ namespace cartocrow::medial_axis {
         std::cout << "Finished printing adjacency list!" << std::endl;
     }
 
+
+
     MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
         assert(shape.is_counter_clockwise_oriented());
-        
+        polygon = shape;
         // create interior straight skeleton
         // TODO: maybe make a separate function to just compute this skeleton,
         // and call it in the constructor
@@ -73,5 +88,7 @@ namespace cartocrow::medial_axis {
             }
         }
     }
+
+
 
 } // namespace cartocrow::medial_axis

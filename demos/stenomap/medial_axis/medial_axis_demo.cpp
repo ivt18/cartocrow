@@ -41,6 +41,8 @@ using namespace cartocrow::medial_axis;
 StenomapDemo::StenomapDemo() {
 	setWindowTitle("AAACartoCrow – Stenomap demo");
 
+
+
   // Make simple polygon
   Polygon<Inexact> polygon;
 	/* polygon.push_back(Point<Inexact>(80, 50));
@@ -73,6 +75,7 @@ StenomapDemo::StenomapDemo() {
   recalculate();
 
   MedialAxis ma(polygon);
+  ma.calculate_weight_function();
   ma.print_adjacency_list();
 }
 

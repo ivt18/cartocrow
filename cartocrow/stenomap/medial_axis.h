@@ -41,14 +41,23 @@ typedef boost::shared_ptr<Ss> SsPtr;
 
 template<typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
 
+template<typename K> using RadiusList = std::map<Point<K>, double>;
+
+
 class MedialAxis {
   private:
     // pointer to interior straight skeleton
     SsPtr iss;
     // adjacency list
+
     AdjacencyList<Inexact> graph;
+    
+    
+
 
   public:
+  Polygon<Inexact> polygon;
+  RadiusList<Inexact> radius_list;
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
     // Adds vertex to the adjacency list
@@ -57,6 +66,8 @@ class MedialAxis {
     void add_edge(const Point<Inexact>& s, const Point<Inexact>& t);
     // Prints the adjacency list
     void print_adjacency_list();
+    // Calculates the weight function for each point
+    void calculate_weight_function();
 };
 
 } // namespace cartocrow::necklace_map
