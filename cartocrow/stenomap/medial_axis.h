@@ -40,6 +40,7 @@ typedef CGAL::Straight_skeleton_2<Inexact> Ss;
 typedef boost::shared_ptr<Ss> SsPtr;
 
 template<typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
+template<typename K> using Branch = std::vector<Point<K>>;
 
 class MedialAxis {
   private:
@@ -47,16 +48,30 @@ class MedialAxis {
     SsPtr iss;
     // adjacency list
     AdjacencyList<Inexact> graph;
+    // branch list
+    std::vector<Branch<Inexact>> branches;
 
   public:
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
     // Adds vertex to the adjacency list
     void add_vertex(const Point<Inexact>& s);
+    // Removes vertex from the adjacency list
+    void remove_vertex(const Point<Inexact>& s);
     // Adds edge to the adjacency list
     void add_edge(const Point<Inexact>& s, const Point<Inexact>& t);
     // Prints the adjacency list
     void print_adjacency_list();
+    // Compute branches
+    void compute_branches();
+    // Get weight of branch
+    double get_branch_weight(int index);
+    // Remove branch from graph
+    void remove_branch(int index);
+    // Get copy of graph with branch passed as parameter removed
+    AdjacencyList<Inexact> temporary_remove_branch(int index);
+    // Prunes the points of the medial axis, using parameter t as threshold
+    void prune_points(double t);
 };
 
 } // namespace cartocrow::necklace_map
