@@ -1,4 +1,6 @@
 #include "medial_axis.h"
+#include "../core/core.h"
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <cmath>
 
 /* namespace cartocrow::tree {
@@ -34,12 +36,16 @@ namespace cartocrow::medial_axis {
         std::cout << "Trying to print pair" << std::endl;   
         for (const auto& vertex: graph) {
             const Point<Inexact>& current_point = vertex.first;
-            double squared_distance = CGAL::squared_distance(current_point, polygon);
-            double radius = std::sqrt(squared_distance);
-            double weight_area = M_PI * radius * radius;
-            radius_list.insert(std::make_pair(current_point, weight_area));
-        
-            std::cout << "Vertex: " << current_point << "has weight: " << squared_distance << std::endl;
+            double radius = INFINITY;
+            Segment<Inexact> segment;
+            Segment<Inexact> segment2;
+            std::cout << "vertex " << current_point << std::endl;
+            for (auto edgeIt = polygon.edges_begin(); edgeIt != polygon.edges_end(); ++edgeIt) {
+                Segment<Inexact> edge = *edgeIt;
+                Inexact::FT dist = CGAL::squared_distance(current_point, edge);
+                if (dist < radius) radius = dist;
+            }
+            radius_list.insert(std::make_pair(current_point, radius));
         }
     }
     void MedialAxis::remove_vertex(const Point<Inexact>& s) {
