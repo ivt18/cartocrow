@@ -41,6 +41,7 @@ namespace cartocrow::medial_axis {
         
             std::cout << "Vertex: " << current_point << "has weight: " << squared_distance << std::endl;
         }
+    }
     void MedialAxis::remove_vertex(const Point<Inexact>& s) {
         // Remove s from the adjacency lists of its neighbors.
         for (const auto& neighbor : graph[s]) {
