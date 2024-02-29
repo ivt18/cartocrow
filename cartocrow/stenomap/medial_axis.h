@@ -53,7 +53,8 @@ class MedialAxis {
 
     AdjacencyList<Inexact> graph;
     
-    
+    // grid of points spanning the whole polygon
+    std::vector<std::vector<Point<Inexact>>> grid;
 
     // branch list
     std::vector<Branch<Inexact>> branches;
@@ -83,6 +84,8 @@ class MedialAxis {
     AdjacencyList<Inexact> temporary_remove_branch(int index);
     // Prunes the points of the medial axis, using parameter t as threshold
     void prune_points(double t);
+    // Computes the grid of points containing the polygon
+    void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
 };
 
 } // namespace cartocrow::necklace_map
