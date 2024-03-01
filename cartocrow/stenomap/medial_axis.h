@@ -50,14 +50,10 @@ class MedialAxis {
 	SsPtr iss;
 	// adjacency list
 
-<<<<<<< HEAD
-	AdjacencyList<Inexact> graph;
-=======
     AdjacencyList<Inexact> graph;
     
     // grid of points spanning the whole polygon
     std::vector<std::vector<Point<Inexact>>> grid;
->>>>>>> 0b15366e7649cdfc65501a552b893a30063e3ac4
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
