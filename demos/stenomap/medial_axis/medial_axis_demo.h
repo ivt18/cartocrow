@@ -27,8 +27,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <memory>
 #include <vector>
 
-#include <cartocrow/core/core.h>
-#include <cartocrow/renderer/geometry_widget.h>
+#include "cartocrow/core/core.h"
+#include "cartocrow/renderer/geometry_widget.h"
+#include "cartocrow/stenomap/medial_axis.h"
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
@@ -40,7 +41,7 @@ class StenomapDemo : public QMainWindow {
 	StenomapDemo();
 
   private:
-	void recalculate();
+	void recalculate(const medial_axis::MedialAxis medial_axis);
 
   std::vector<Polygon<Inexact>> m_polygons;
 

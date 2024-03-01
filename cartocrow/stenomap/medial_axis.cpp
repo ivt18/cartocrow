@@ -2,6 +2,7 @@
 #include "../core/core.h"
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <cmath>
+#include <unordered_map>
 
 /* namespace cartocrow::tree {
 
@@ -33,21 +34,58 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::calculate_weight_function() {
-        std::cout << "Trying to print pair" << std::endl;   
+         
         for (const auto& vertex: graph) {
             const Point<Inexact>& current_point = vertex.first;
             double radius = INFINITY;
             Segment<Inexact> segment;
             Segment<Inexact> segment2;
-            std::cout << "vertex " << current_point << std::endl;
             for (auto edgeIt = polygon.edges_begin(); edgeIt != polygon.edges_end(); ++edgeIt) {
                 Segment<Inexact> edge = *edgeIt;
                 Inexact::FT dist = CGAL::squared_distance(current_point, edge);
                 if (dist < radius) radius = dist;
             }
             radius_list.insert(std::make_pair(current_point, radius));
+            
         }
     }
+
+    void MedialAxis::add_grid_points_to_centroid_map() {
+        for (const auto& row : grid) {
+            for (const auto& point : row) {
+                for (const auto& vertex: graph) {
+                    const Point<Inexact>& current_point = vertex.first;
+                    centroid_to_points_map[current_point];
+                    double radius = radius_list[current_point];
+                    if (CGAL::squared_distance(current_point, point) <= radius) {
+                        centroid_to_points_map[current_point].push_back(point);
+                    }
+                }
+            }
+        }
+    }
+
+    // Iterate through all grid points and find the closest centroid
+    void MedialAxis::add_grid_points_to_closest_centroid_map() {
+        for (const auto& row : grid) {
+            for (const auto& point : row) {
+                Point<Inexact> closest_centroid;
+                double min_distance = INFINITY;
+                for (const auto& vertex: graph) {
+                    const Point<Inexact>& current_point = vertex.first;
+                    closest_centroid_to_points_map[current_point];
+                    double distance = CGAL::squared_distance(current_point, point);
+                    if (distance < min_distance) {
+                        min_distance = distance;
+                        closest_centroid = current_point;
+                    }
+                }
+                closest_centroid_to_points_map[closest_centroid].push_back(point);
+            }
+        }
+    }
+
+    
     void MedialAxis::remove_vertex(const Point<Inexact>& s) {
         // Remove s from the adjacency lists of its neighbors.
         for (const auto& neighbor : graph[s]) {
