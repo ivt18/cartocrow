@@ -50,7 +50,14 @@ class MedialAxis {
 	SsPtr iss;
 	// adjacency list
 
+<<<<<<< HEAD
 	AdjacencyList<Inexact> graph;
+=======
+    AdjacencyList<Inexact> graph;
+    
+    // grid of points spanning the whole polygon
+    std::vector<std::vector<Point<Inexact>>> grid;
+>>>>>>> 0b15366e7649cdfc65501a552b893a30063e3ac4
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
@@ -83,6 +90,8 @@ class MedialAxis {
 	SsPtr getIss() const {
 		return iss;
 	}
+    // Computes the grid of points containing the polygon
+    void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
 };
 
 } // namespace cartocrow::medial_axis

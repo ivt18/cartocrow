@@ -73,13 +73,14 @@ StenomapDemo::StenomapDemo() {
     recalculate();
 
   MedialAxis ma(polygon);
+  ma.compute_grid(10, 10, 5);
   ma.calculate_weight_function();
   ma.print_adjacency_list();
-   // MedialAxis ma(polygon);
-   // ma.print_adjacency_list();
+    /* MedialAxis ma(polygon);
+    ma.print_adjacency_list();
     ma.compute_branches();
     ma.remove_branch(0);
-    ma.print_adjacency_list();
+    ma.print_adjacency_list(); */
 }
 
 void StenomapDemo::recalculate() {
