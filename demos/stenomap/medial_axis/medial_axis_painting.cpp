@@ -16,7 +16,18 @@ MedialAxisPainting::MedialAxisPainting(SsPtr medial_axis)
 void MedialAxisPainting::paint(renderer::GeometryRenderer& renderer) const {
     renderer.setMode(renderer::GeometryRenderer::stroke);
     renderer.setStroke(Color{100,100,100}, 4);
+    std::cout<<"OK";
     // TODO: implement this when drawing medial axis is added (technically a straight skeleton)
     /* renderer.draw(medialAxis); */
+    // Iterate through halfedges to draw segments
+    for(auto edge = medialAxis->halfedges_begin(); edge != medialAxis->halfedges_end(); ++edge) {
+        if (!edge->is_border()) {
+            auto start = edge->prev()->vertex()->point();
+            auto end = edge->vertex()->point();
+            // Create a segment from start to end point and draw it
+            Segment<Inexact> segment(start, end);
+            renderer.draw(segment);
+        }
+    }
 }
 

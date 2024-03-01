@@ -39,52 +39,52 @@ namespace cartocrow::medial_axis {
 typedef CGAL::Straight_skeleton_2<Inexact> Ss;
 typedef boost::shared_ptr<Ss> SsPtr;
 
-template<typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
-template<typename K> using Branch = std::vector<Point<K>>;
+template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
+template <typename K> using Branch = std::vector<Point<K>>;
 
-template<typename K> using RadiusList = std::map<Point<K>, double>;
-
+template <typename K> using RadiusList = std::map<Point<K>, double>;
 
 class MedialAxis {
   private:
-    // pointer to interior straight skeleton
-    SsPtr iss;
-    // adjacency list
+	// pointer to interior straight skeleton
+	SsPtr iss;
+	// adjacency list
 
-    AdjacencyList<Inexact> graph;
-    
-    
+	AdjacencyList<Inexact> graph;
 
-    // branch list
-    std::vector<Branch<Inexact>> branches;
+	// branch list
+	std::vector<Branch<Inexact>> branches;
 
   public:
-  Polygon<Inexact> polygon;
-  RadiusList<Inexact> radius_list;
+	Polygon<Inexact> polygon;
+	RadiusList<Inexact> radius_list;
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
-    // Adds vertex to the adjacency list
-    void add_vertex(const Point<Inexact>& s);
-    // Removes vertex from the adjacency list
-    void remove_vertex(const Point<Inexact>& s);
-    // Adds edge to the adjacency list
-    void add_edge(const Point<Inexact>& s, const Point<Inexact>& t);
-    // Prints the adjacency list
-    void print_adjacency_list();
-    // Calculates the weight function for each point
-    void calculate_weight_function();
-    // Compute branches
-    void compute_branches();
-    // Get weight of branch
-    double get_branch_weight(int index);
-    // Remove branch from graph
-    void remove_branch(int index);
-    // Get copy of graph with branch passed as parameter removed
-    AdjacencyList<Inexact> temporary_remove_branch(int index);
-    // Prunes the points of the medial axis, using parameter t as threshold
-    void prune_points(double t);
+	// Adds vertex to the adjacency list
+	void add_vertex(const Point<Inexact>& s);
+	// Removes vertex from the adjacency list
+	void remove_vertex(const Point<Inexact>& s);
+	// Adds edge to the adjacency list
+	void add_edge(const Point<Inexact>& s, const Point<Inexact>& t);
+	// Prints the adjacency list
+	void print_adjacency_list();
+	// Calculates the weight function for each point
+	void calculate_weight_function();
+	// Compute branches
+	void compute_branches();
+	// Get weight of branch
+	double get_branch_weight(int index);
+	// Remove branch from graph
+	void remove_branch(int index);
+	// Get copy of graph with branch passed as parameter removed
+	AdjacencyList<Inexact> temporary_remove_branch(int index);
+	// Prunes the points of the medial axis, using parameter t as threshold
+	void prune_points(double t);
+	SsPtr getIss() const {
+		return iss;
+	}
 };
 
-} // namespace cartocrow::necklace_map
+} // namespace cartocrow::medial_axis
 
 #endif //CARTOCROW_STENOMAP_MEDIAL_AXIS_H
