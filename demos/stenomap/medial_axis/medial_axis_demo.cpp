@@ -44,9 +44,9 @@ StenomapDemo::StenomapDemo() {
     // Make simple polygon
     Polygon<Inexact> polygon;
     /* polygon.push_back(Point<Inexact>(80, 50));
-    polygon.push_back(Point<Inexact>(90, 4));
-    polygon.push_back(Point<Inexact>(40, 30));
-    polygon.push_back(Point<Inexact>(60, 60));*/ 
+       polygon.push_back(Point<Inexact>(90, 4));
+       polygon.push_back(Point<Inexact>(40, 30));
+       polygon.push_back(Point<Inexact>(60, 60));*/ 
     polygon.push_back( Point<Inexact>(-1,-1) ) ;
     polygon.push_back( Point<Inexact>(0,-12) ) ;
     polygon.push_back( Point<Inexact>(1,-1) ) ;
@@ -65,8 +65,8 @@ StenomapDemo::StenomapDemo() {
 
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-        recalculate();
-    });
+            recalculate();
+            });
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
@@ -79,35 +79,33 @@ StenomapDemo::StenomapDemo() {
   ma.add_grid_points_to_centroid_map();
   ma.add_grid_points_to_closest_centroid_map();
     /* MedialAxis ma(polygon);
-    ma.print_adjacency_list();
-    ma.compute_branches();
-    ma.remove_branch(0);
-    ma.print_adjacency_list(); */
+       ma.print_adjacency_list();
+       ma.compute_branches();
+       ma.remove_branch(0);
+       ma.print_adjacency_list(); */
 }
 
 void StenomapDemo::recalculate() {
     // draw polygon
     for (const Polygon<Inexact>& p : m_polygons) {
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
-        std::cout<<"ok";
     }
 
     // TODO: make sure this works well with medial axis computation implementation once 
     // drawing skeleton is added and feature/feature-points is merged
 
-   // if (m_medialAxisBox->isChecked()) {
-        // find/compute medial axis and draw it
-        for (const Polygon<Inexact>& p : m_polygons) {
-            std::cout<<"ok1";
-            // TODO: get SsPtr medialAxis from p using medial_axis.h
-            /* MedialAxis med_axis = MedialAxis(p); */
-            /* MedialAxisPainting m_painting = MedialAxisPainting(med_axis.iss); */
-            /* m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
-         MedialAxis med_axis(p); 
-        auto medialAxisPainting = std::make_shared<MedialAxisPainting>(med_axis.getIss());
+    // if (m_medialAxisBox->isChecked()) {
+    // find/compute medial axis and draw it
+    for (const Polygon<Inexact>& p : m_polygons) {
+        // TODO: get SsPtr medialAxis from p using medial_axis.h
+        /* MedialAxis med_axis = MedialAxis(p); */
+        /* MedialAxisPainting m_painting = MedialAxisPainting(med_axis.iss); */
+        /* m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
+        MedialAxis med_axis(p); 
+        auto medialAxisPainting = std::make_shared<MedialAxisPainting>(med_axis);
         m_renderer->addPainting(medialAxisPainting, "Medial Axis");
-        }
-   // }
+    }
+    // }
 }
 
 int main(int argc, char* argv[]) {

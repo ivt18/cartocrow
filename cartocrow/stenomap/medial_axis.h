@@ -40,6 +40,7 @@ typedef CGAL::Straight_skeleton_2<Inexact> Ss;
 typedef boost::shared_ptr<Ss> SsPtr;
 
 template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
+template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
 template <typename K> using Branch = std::vector<Point<K>>;
 
 template <typename K> using RadiusList = std::map<Point<K>, double>;
@@ -59,7 +60,7 @@ class MedialAxis {
 	AdjacencyList<Inexact> closest_centroid_to_points_map;
     
     // grid of points spanning the whole polygon
-    std::vector<std::vector<Point<Inexact>>> grid;
+    Grid<Inexact> grid;
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
@@ -100,6 +101,13 @@ class MedialAxis {
 	}
 	void add_grid_points_to_centroid_map();
 	void add_grid_points_to_closest_centroid_map();
+    AdjacencyList<Inexact> get_graph() const {
+        return graph;
+    }
+    Grid<Inexact> get_grid() const {
+        return grid;
+    }
+    
     // Computes the grid of points containing the polygon
     void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
 };
