@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "medial_axis_demo.h"
 #include "polygon_painting.h"
 #include "medial_axis_painting.h"
+#include "grid_painting.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -71,9 +72,6 @@ StenomapDemo::StenomapDemo() {
     toolBar->addWidget(m_medialAxisBox);
 
     recalculate();
-
-    MedialAxis ma(polygon);
-    ma.compute_grid(10, 10, 5);
     // ma.calculate_weight_function();
     /* MedialAxis ma(polygon);
        ma.print_adjacency_list();
@@ -83,26 +81,18 @@ StenomapDemo::StenomapDemo() {
 }
 
 void StenomapDemo::recalculate() {
-    // draw polygon
     for (const Polygon<Inexact>& p : m_polygons) {
+        // Draw polygon
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
-    }
 
-    // TODO: make sure this works well with medial axis computation implementation once 
-    // drawing skeleton is added and feature/feature-points is merged
+        MedialAxis medial_axis(p); 
+        medial_axis.compute_grid(10, 10, 5);
 
-    // if (m_medialAxisBox->isChecked()) {
-    // find/compute medial axis and draw it
-    for (const Polygon<Inexact>& p : m_polygons) {
-        // TODO: get SsPtr medialAxis from p using medial_axis.h
-        /* MedialAxis med_axis = MedialAxis(p); */
-        /* MedialAxisPainting m_painting = MedialAxisPainting(med_axis.iss); */
-        /* m_renderer->addPainting(std::make_shared<PolygonPainting>(m_painting), "medialAxis"); */
-        MedialAxis med_axis(p); 
-        auto medialAxisPainting = std::make_shared<MedialAxisPainting>(med_axis);
-        m_renderer->addPainting(medialAxisPainting, "Medial Axis");
+        /* auto medialAxisPainting = std::make_shared<MedialAxisPainting>(medial_axis);
+        auto grid_painting = std::make_shared<GridPainting>(medial_axis); */
+        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(medial_axis), "Medial Axis");
+        m_renderer->addPainting(std::make_shared<GridPainting>(medial_axis), "Grid");
     }
-    // }
 }
 
 int main(int argc, char* argv[]) {

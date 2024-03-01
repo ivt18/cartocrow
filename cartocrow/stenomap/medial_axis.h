@@ -84,18 +84,16 @@ class MedialAxis {
 	AdjacencyList<Inexact> temporary_remove_branch(int index);
 	// Prunes the points of the medial axis, using parameter t as threshold
 	void prune_points(double t);
-	SsPtr getIss() const {
-		return iss;
-	}
+    // Computes the grid of points containing the polygon
+    void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
+
+    // Getters
     AdjacencyList<Inexact> get_graph() const {
         return graph;
     }
     Grid<Inexact> get_grid() const {
         return grid;
     }
-    
-    // Computes the grid of points containing the polygon
-    void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
 };
 
 } // namespace cartocrow::medial_axis

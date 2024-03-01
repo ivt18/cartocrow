@@ -230,7 +230,7 @@ namespace cartocrow::medial_axis {
         bottom_right = Point<Inexact>(bbox.xmax(), bbox.ymin());
         double cell_width = (bottom_right.x() - top_left.x()) / cells_x;
         double cell_height = (top_left.y() - bottom_right.y()) / cells_y;
-        for (unsigned int curr_y = 0; curr_y < cells_y; curr_y++) {
+        for (unsigned int curr_y = 0; curr_y <= cells_y; curr_y++) {
             std::vector<Point<Inexact>> row(cells_x * points_per_cell_edge + 1);
             double delta_y = cell_height * curr_y;
             for (unsigned int curr_x = 0; curr_x < cells_x; curr_x++) {
