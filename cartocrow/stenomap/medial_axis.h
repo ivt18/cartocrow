@@ -51,6 +51,12 @@ class MedialAxis {
 	// adjacency list
 
     AdjacencyList<Inexact> graph;
+	
+	// map between centroid and points in its radius
+	AdjacencyList<Inexact> centroid_to_points_map;
+
+	// map between centroid and the points that consider the centroid as the closest
+	AdjacencyList<Inexact> closest_centroid_to_points_map;
     
     // grid of points spanning the whole polygon
     std::vector<std::vector<Point<Inexact>>> grid;
@@ -58,9 +64,15 @@ class MedialAxis {
 	// branch list
 	std::vector<Branch<Inexact>> branches;
 
+	// Map between a centroid and the area lost
+	RadiusList<Inexact> centroid_to_area_lost_map;
+	
+
   public:
 	Polygon<Inexact> polygon;
 	RadiusList<Inexact> radius_list;
+	
+
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
 	// Adds vertex to the adjacency list
@@ -86,6 +98,8 @@ class MedialAxis {
 	SsPtr getIss() const {
 		return iss;
 	}
+	void add_grid_points_to_centroid_map();
+	void add_grid_points_to_closest_centroid_map();
     // Computes the grid of points containing the polygon
     void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
 };

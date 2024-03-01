@@ -76,6 +76,8 @@ StenomapDemo::StenomapDemo() {
   ma.compute_grid(10, 10, 5);
   ma.calculate_weight_function();
   ma.print_adjacency_list();
+  ma.add_grid_points_to_centroid_map();
+  ma.add_grid_points_to_closest_centroid_map();
     /* MedialAxis ma(polygon);
     ma.print_adjacency_list();
     ma.compute_branches();
