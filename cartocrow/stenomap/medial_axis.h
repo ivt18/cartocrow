@@ -44,6 +44,7 @@ template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
 template <typename K> using Branch = std::vector<Point<K>>;
 
 template <typename K> using RadiusList = std::map<Point<K>, double>;
+template <typename K> using AreaLostList = std::map<Point<K>, double>;
 
 class MedialAxis {
   private:
@@ -54,10 +55,10 @@ class MedialAxis {
     AdjacencyList<Inexact> graph;
 	
 	// map between centroid and points in its radius
-	AdjacencyList<Inexact> centroid_to_points_map;
+	AdjacencyList<Inexact> centroid_neighborhoods;
 
 	// map between centroid and the points that consider the centroid as the closest
-	AdjacencyList<Inexact> closest_centroid_to_points_map;
+	AdjacencyList<Inexact> centroid_closest_points;
     
     // grid of points spanning the whole polygon
     Grid<Inexact> grid;
@@ -66,7 +67,7 @@ class MedialAxis {
 	std::vector<Branch<Inexact>> branches;
 
 	// Map between a centroid and the area lost
-	RadiusList<Inexact> centroid_to_area_lost_map;
+	AreaLostList<Inexact> centroid_area_lost;
 	
 
   public:
@@ -98,8 +99,8 @@ class MedialAxis {
 	void prune_points(double t);
     // Computes the grid of points containing the polygon
     void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
-	void add_grid_points_to_centroid_map();
-	void add_grid_points_to_closest_centroid_map();
+	void compute_centroid_neighborhoods();
+	void compute_centroid_closest_points();
 
     // Getters
     AdjacencyList<Inexact> get_graph() const {

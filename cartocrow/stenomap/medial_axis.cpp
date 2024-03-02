@@ -50,15 +50,15 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    void MedialAxis::add_grid_points_to_centroid_map() {
+    void MedialAxis::compute_centroid_neighborhoods() {
         for (const auto& row : grid) {
             for (const auto& point : row) {
                 for (const auto& vertex: graph) {
                     const Point<Inexact>& current_point = vertex.first;
-                    centroid_to_points_map[current_point];
+                    centroid_neighborhoods[current_point];
                     double radius = radius_list[current_point];
                     if (CGAL::squared_distance(current_point, point) <= radius) {
-                        centroid_to_points_map[current_point].push_back(point);
+                        centroid_neighborhoods[current_point].push_back(point);
                     }
                 }
             }
@@ -66,21 +66,21 @@ namespace cartocrow::medial_axis {
     }
 
     // Iterate through all grid points and find the closest centroid
-    void MedialAxis::add_grid_points_to_closest_centroid_map() {
+    void MedialAxis::compute_centroid_closest_points() {
         for (const auto& row : grid) {
             for (const auto& point : row) {
                 Point<Inexact> closest_centroid;
                 double min_distance = INFINITY;
                 for (const auto& vertex: graph) {
                     const Point<Inexact>& current_point = vertex.first;
-                    closest_centroid_to_points_map[current_point];
+                    centroid_closest_points[current_point];
                     double distance = CGAL::squared_distance(current_point, point);
                     if (distance < min_distance) {
                         min_distance = distance;
                         closest_centroid = current_point;
                     }
                 }
-                closest_centroid_to_points_map[closest_centroid].push_back(point);
+                centroid_closest_points[closest_centroid].push_back(point);
             }
         }
     }
