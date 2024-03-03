@@ -31,6 +31,7 @@ namespace cartocrow::medial_axis {
 
     void MedialAxis::add_vertex(const Point<Inexact>& s) {
         graph[s];
+        centroid_area_lost[s];
     }
 
     void MedialAxis::calculate_weight_function() {
@@ -82,6 +83,18 @@ namespace cartocrow::medial_axis {
                 }
                 centroid_closest_points[closest_centroid].push_back(point);
             }
+        }
+    }
+    // Remove all points from the grid that are not in the polygon
+    void MedialAxis::prune_grid() {
+        for (const auto& row : grid) {
+            std::vector<Point<Inexact>> pruned_row;
+            for (const auto& point : row) {
+                if (CGAL::bounded_side_2(polygon.vertices_begin(), polygon.vertices_end(), point) != CGAL::ON_UNBOUNDED_SIDE) {
+                    pruned_row.push_back(point);
+                }
+            }
+            grid_pruned.push_back(pruned_row);
         }
     }
 
@@ -193,54 +206,57 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    AdjacencyList<Inexact> MedialAxis::temporary_remove_branch(int index) {
-        AdjacencyList<Inexact> output_graph = graph;
-        Branch<Inexact> branch = branches[index];
-        if (branch.size() == 0) {
-            // If the branch only contains the junction point or is empty, nothing to remove.
-            return output_graph;
-        }
-
-        // Iterate through all points in the branch except the last one (the junction point).
-        for (size_t i = 0; i < branch.size(); ++i) {
-            const Point<Inexact>& s=  branch[i];
-            // Remove s from the adjacency lists of its neighbors.
-            for (const auto& neighbor : output_graph[s]) {
-                auto& neighborsList = output_graph[neighbor];
-                neighborsList.remove(s);
+     std::vector<Point<Inexact>> MedialAxis::get_points_not_in_branch(int i) {
+        Branch<Inexact> branch = branches[i];
+        std::vector<Point<Inexact>> points_not_in_branch;
+        for (const auto& point: graph) {
+            Point<Inexact> cur = point.first;
+            for (int j = 0; j < branch.size() - 1; j++) {
+                if (cur == branch[j]) {
+                    break;
+                }
+                if (j == branch.size() - 2) {
+                    points_not_in_branch.push_back(cur);
+                }
             }
-
-            // Finally, remove the point from the output_graph.
-            output_graph.erase(s);
         }
-        return output_graph;
+        return points_not_in_branch;
     }
+    
 
-    double MedialAxis::get_branch_weight(int index) {
-        // Compute total area
-        double totalArea = 0.0;
-        for (const auto& v : graph) {
-            const Point<Inexact>& point = v.first;
-            /* double radius = get_radius(point); */
-            double radius = 2.0;
-            totalArea += M_PI * radius * radius;
+    // For each branch, count number of points of the grid that have the branch as the closest centroid and are not in the neighbourhood of any other centroid
+    int MedialAxis::get_branch_weight(int i) {
+        // std::vector<Point<Inexact>> points_not_in_branch = get_points_not_in_branch(i);
+        Branch<Inexact> branch = branches[i];
+        int weight = 0;
+        Point<Inexact> point_not = branch.back();
+        for (int k = 0; k < branch.size() - 1; k++) {
+            std::list<Point<Inexact>> closest_points = centroid_closest_points[branch[k]];
+            for (const auto& point: closest_points) {
+                bool stop = false;
+                // for (const auto& point_not: points_not_in_branch) {
+                    for (const auto& point_neigh: centroid_neighborhoods[point_not]) {
+                        if (point == point_neigh) {
+                            stop = true;
+                            break;
+                        }
+                    }
+                    if (!stop) {
+                        weight++;
+                    }
+                // }
+                // weight++;
+            }
+            weight += centroid_area_lost[branch[k]];
         }
-
-        // Compute area without brach
-        double nonBranchArea = 0.0;
-        for (const auto& v : temporary_remove_branch(index)) {
-            const Point<Inexact>& point = v.first;
-            /* double radius = get_radius(point); */
-            double radius = 2.0;
-            nonBranchArea += M_PI * radius * radius;
-        }
-
-        // return weight
-        return (1.0 - nonBranchArea / totalArea);
+        return weight;
     }
-
     void MedialAxis::prune_points(double t) {
         compute_branches();
+        int grid_size = 0;
+        for (const auto& row : grid_pruned) {
+            grid_size += row.size();
+        }
         while (true) {
             double minWeight = INFINITY;
             int minIndex = -1;
@@ -253,11 +269,13 @@ namespace cartocrow::medial_axis {
                     minIndex = i;
                 }
             }
-            if (minIndex == -1 || minWeight >= t) {
+            if (minIndex == -1 || minWeight >= t * grid_size) {
                 std::cout << "Pruning finished" << std::endl;
                 return;
             }
             remove_branch(minIndex);
+            compute_branches();
+            centroid_area_lost[branches[minIndex].back()] += minWeight;
         }
     }
 

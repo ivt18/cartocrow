@@ -44,7 +44,7 @@ template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
 template <typename K> using Branch = std::vector<Point<K>>;
 
 template <typename K> using RadiusList = std::map<Point<K>, double>;
-template <typename K> using AreaLostList = std::map<Point<K>, double>;
+template <typename K> using AreaLostList = std::map<Point<K>, int>;
 
 class MedialAxis {
   private:
@@ -62,6 +62,9 @@ class MedialAxis {
     
     // grid of points spanning the whole polygon
     Grid<Inexact> grid;
+
+	// grid of points inside the polygon with pruning
+	Grid<Inexact> grid_pruned;
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
@@ -90,7 +93,7 @@ class MedialAxis {
 	// Compute branches
 	void compute_branches();
 	// Get weight of branch
-	double get_branch_weight(int index);
+	int get_branch_weight(int index);
 	// Remove branch from graph
 	void remove_branch(int index);
 	// Get copy of graph with branch passed as parameter removed
@@ -102,12 +105,20 @@ class MedialAxis {
 	void compute_centroid_neighborhoods();
 	void compute_centroid_closest_points();
 
+	void prune_grid();
+
+	std::vector<Point<Inexact>> get_points_not_in_branch(int i);
+
     // Getters
     AdjacencyList<Inexact> get_graph() const {
         return graph;
     }
     Grid<Inexact> get_grid() const {
         return grid;
+    }
+
+	Grid<Inexact> get_pruned_grid() const {
+        return grid_pruned;
     }
 };
 

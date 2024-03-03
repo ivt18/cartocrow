@@ -59,6 +59,7 @@ StenomapDemo::StenomapDemo() {
 
     MedialAxis medial_axis(polygon);
     medial_axis.compute_grid(10, 10, 5);
+    medial_axis.prune_grid();
     medial_axis.calculate_weight_function();
     medial_axis.compute_centroid_neighborhoods();
     medial_axis.compute_centroid_closest_points();
@@ -76,6 +77,8 @@ StenomapDemo::StenomapDemo() {
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
+    recalculate(medial_axis);
+    medial_axis.prune_points(0.1);
     recalculate(medial_axis);
     /* MedialAxis ma(polygon);
        ma.print_adjacency_list();
