@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "medial_axis_demo.h"
 #include "polygon_painting.h"
 #include "medial_axis_painting.h"
+#include "pruned_medial_axis_painting.h"
 #include "grid_painting.h"
 
 #include <QApplication>
@@ -63,6 +64,7 @@ StenomapDemo::StenomapDemo() {
     medial_axis.calculate_weight_function();
     medial_axis.compute_centroid_neighborhoods();
     medial_axis.compute_centroid_closest_points();
+    MedialAxis old = medial_axis;
 
     // setup renderer
     m_renderer = new GeometryWidget();
@@ -70,16 +72,16 @@ StenomapDemo::StenomapDemo() {
     m_renderer->setGridMode(GeometryWidget::GridMode::CARTESIAN);
     setCentralWidget(m_renderer);
 
+    medial_axis.prune_points(0.05);
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-            recalculate(medial_axis);
+            recalculate(medial_axis, old);
             });
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
-    recalculate(medial_axis);
-    medial_axis.prune_points(0.1);
-    recalculate(medial_axis);
+    /* recalculate(medial_axis); */
+    recalculate(medial_axis, old);
     /* MedialAxis ma(polygon);
        ma.print_adjacency_list();
        ma.compute_branches();
@@ -87,12 +89,14 @@ StenomapDemo::StenomapDemo() {
        ma.print_adjacency_list(); */
 }
 
-void StenomapDemo::recalculate(const MedialAxis medial_axis) {
+void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old) {
     for (const Polygon<Inexact>& p : m_polygons) {
         // Draw polygon
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
         // Draw medial axis
-        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(medial_axis), "Medial Axis");
+        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(old), "Medial Axis");
+        // Draw pruned medial axis
+        m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(medial_axis), "Pruned medial Axis");
         // Draw grid
         m_renderer->addPainting(std::make_shared<GridPainting>(medial_axis), "Grid");
     }

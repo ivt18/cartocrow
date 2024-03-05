@@ -133,8 +133,10 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::compute_branches() {
+        std::cout << "computing branches" << std::endl;
         std::set<Point<Inexact>> visited;
         std::map<Point<Inexact>, Point<Inexact>> parents; // To reconstruct paths
+        branches.clear();
   
         // Identify endpoints and junction points
         std::set<Point<Inexact>> endpoints, junctions;
@@ -190,6 +192,7 @@ namespace cartocrow::medial_axis {
                 }
             }
         }
+        std::cout << "done computing branches" << std::endl;
     }
 
     void MedialAxis::remove_branch(int index) {
@@ -234,21 +237,19 @@ namespace cartocrow::medial_axis {
             std::list<Point<Inexact>> closest_points = centroid_closest_points[branch[k]];
             for (const auto& point: closest_points) {
                 bool stop = false;
-                // for (const auto& point_not: points_not_in_branch) {
-                    for (const auto& point_neigh: centroid_neighborhoods[point_not]) {
-                        if (point == point_neigh) {
-                            stop = true;
-                            break;
-                        }
+                for (const auto& point_neigh: centroid_neighborhoods[point_not]) {
+                    if (point == point_neigh) {
+                        stop = true;
+                        break;
                     }
-                    if (!stop) {
-                        weight++;
-                    }
-                // }
-                // weight++;
+                }
+                if (!stop) {
+                    weight++;
+                }
             }
             weight += centroid_area_lost[branch[k]];
         }
+        std::cout << "weight for branch " << i << " is = " << weight << std::endl;
         return weight;
     }
     void MedialAxis::prune_points(double t) {
@@ -261,6 +262,7 @@ namespace cartocrow::medial_axis {
             double minWeight = INFINITY;
             int minIndex = -1;
 
+            std::cout << "number of branches = " << branches.size() << std::endl;
             // Find the branch with the minimum weight
             for (size_t i = 0; i < branches.size(); ++i) {
                 double weight = get_branch_weight(i);
@@ -273,7 +275,12 @@ namespace cartocrow::medial_axis {
                 std::cout << "Pruning finished" << std::endl;
                 return;
             }
+            std::cout << "removing branch " << minIndex << std::endl;
             remove_branch(minIndex);
+            std::cout << "graph size = " << graph.size() << std::endl;
+            std::cout << std::endl;
+            std::cout << std::endl;
+            std::cout << std::endl;
             compute_branches();
             centroid_area_lost[branches[minIndex].back()] += minWeight;
         }
