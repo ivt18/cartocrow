@@ -318,7 +318,7 @@ namespace cartocrow::medial_axis {
                         if (min_sqr_distance == -1 || cur_sqr_distance < min_sqr_distance) {
                             min_sqr_distance = cur_sqr_distance;
                             /* std::cout << "branch to point: " << point << std::endl; */
-                            grid_closest_branches[point] = &branch;
+                            grid_closest_branches[point] = branch;
                         }
                     }
                 }
@@ -326,17 +326,19 @@ namespace cartocrow::medial_axis {
         }
         for (auto row : grid) {
             for (auto point : row) {
-                branch_closest_grid_points[*grid_closest_branches[point]].push_back(&point);
+                branch_closest_grid_points[grid_closest_branches[point]].push_back(&point);
             }
         }
     }
 
     void MedialAxis::print_grid_closest_branches() {
         std::cout << "Printing grid closest branches" << std::endl;
+            std::cout << "branch size:" << branch_closest_grid_points.size() << std::endl;
         for (int i = 0; i < branches.size(); i++) {
             std::cout << "branch index :" << i << std::endl;
+            std::cout << "branch size:" << branch_closest_grid_points[branches[i]].size() << std::endl;
             for (auto point : branch_closest_grid_points[branches[i]]) {
-                std::cout << "\t" << point << std::endl;
+                std::cout << point << std::endl;
             }
             std::cout << std::endl;
         }
