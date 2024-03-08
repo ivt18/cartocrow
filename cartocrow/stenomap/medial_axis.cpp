@@ -317,10 +317,16 @@ namespace cartocrow::medial_axis {
                         cur_sqr_distance = CGAL::squared_distance(point, cur_segment);
                         if (min_sqr_distance == -1 || cur_sqr_distance < min_sqr_distance) {
                             min_sqr_distance = cur_sqr_distance;
+                            /* std::cout << "branch to point: " << point << std::endl; */
                             grid_closest_branches[point] = &branch;
                         }
                     }
                 }
+            }
+        }
+        for (auto row : grid) {
+            for (auto point : row) {
+                branch_closest_grid_points[*grid_closest_branches[point]].push_back(&point);
             }
         }
     }

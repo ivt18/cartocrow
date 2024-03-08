@@ -43,6 +43,7 @@ typedef boost::shared_ptr<Ss> SsPtr;
 template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
 template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
 template <typename K> using Branch = std::vector<Point<K>>;
+template <typename K> using BranchClosestGridPoints = std::map<Branch<K>, std::vector<Point<K>*>>;
 template <typename K> using GridClosestBranches = std::map<Point<K>, Branch<K>*>;
 
 template <typename K> using RadiusList = std::map<Point<K>, double>;
@@ -70,6 +71,8 @@ class MedialAxis {
 
     // closest branches for each grid point
     GridClosestBranches<Inexact> grid_closest_branches;
+
+    BranchClosestGridPoints<Inexact> branch_closest_grid_points;
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
