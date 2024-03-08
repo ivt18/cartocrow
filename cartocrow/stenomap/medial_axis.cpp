@@ -305,6 +305,37 @@ namespace cartocrow::medial_axis {
         }
     }
 
+    void MedialAxis::compute_grid_closest_branches() {
+        // TODO: optimize this to not go over all branches
+        for (auto row : grid) {
+            for (auto point : row) {
+                double min_sqr_distance = -1;
+                double cur_sqr_distance;
+                for (auto branch : branches) {
+                    for (auto i = branch.begin(); i != branch.end() && (i+1) != branch.end(); i++) {
+                        Segment<Inexact> cur_segment(*i, *(i+1));
+                        cur_sqr_distance = CGAL::squared_distance(point, cur_segment);
+                        if (min_sqr_distance == -1 || cur_sqr_distance < min_sqr_distance) {
+                            min_sqr_distance = cur_sqr_distance;
+                            grid_closest_branches[point] = &branch;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void MedialAxis::print_grid_closest_branches() {
+        std::cout << "Printing grid closest branches" << std::endl;
+        for (auto closest_branch : grid_closest_branches) {
+            std::cout << closest_branch.first << std::endl;
+            for (auto point : *(closest_branch.second)) {
+                std::cout << "\t" << point << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
+
     MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
         assert(shape.is_counter_clockwise_oriented());
         polygon = shape;
@@ -327,7 +358,5 @@ namespace cartocrow::medial_axis {
             }
         }
     }
-
-
 
 } // namespace cartocrow::medial_axis

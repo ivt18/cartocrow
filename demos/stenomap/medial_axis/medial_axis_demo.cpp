@@ -60,10 +60,12 @@ StenomapDemo::StenomapDemo() {
 
     MedialAxis medial_axis(polygon);
     medial_axis.compute_grid(10, 10, 5);
-    medial_axis.prune_grid();
-    medial_axis.calculate_weight_function();
-    medial_axis.compute_centroid_neighborhoods();
-    medial_axis.compute_centroid_closest_points();
+    // medial_axis.prune_grid();
+    // medial_axis.calculate_weight_function();
+    // medial_axis.compute_centroid_neighborhoods();
+    // medial_axis.compute_centroid_closest_points();
+    medial_axis.compute_grid_closest_branches();
+    medial_axis.print_grid_closest_branches();
     MedialAxis old = medial_axis;
 
     // setup renderer

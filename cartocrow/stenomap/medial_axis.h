@@ -39,9 +39,11 @@ namespace cartocrow::medial_axis {
 typedef CGAL::Straight_skeleton_2<Inexact> Ss;
 typedef boost::shared_ptr<Ss> SsPtr;
 
+
 template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
 template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
 template <typename K> using Branch = std::vector<Point<K>>;
+template <typename K> using GridClosestBranches = std::map<Point<K>, Branch<K>*>;
 
 template <typename K> using RadiusList = std::map<Point<K>, double>;
 template <typename K> using AreaLostList = std::map<Point<K>, int>;
@@ -65,6 +67,9 @@ class MedialAxis {
 
 	// grid of points inside the polygon with pruning
 	Grid<Inexact> grid_pruned;
+
+    // closest branches for each grid point
+    GridClosestBranches<Inexact> grid_closest_branches;
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
@@ -104,6 +109,9 @@ class MedialAxis {
     void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
 	void compute_centroid_neighborhoods();
 	void compute_centroid_closest_points();
+
+    void compute_grid_closest_branches();
+    void print_grid_closest_branches();
 
 	void prune_grid();
 
