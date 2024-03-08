@@ -64,9 +64,12 @@ StenomapDemo::StenomapDemo() {
     // medial_axis.calculate_weight_function();
     // medial_axis.compute_centroid_neighborhoods();
     // medial_axis.compute_centroid_closest_points();
+    medial_axis.compute_branches();
     medial_axis.compute_grid_closest_branches();
     medial_axis.print_grid_closest_branches();
+
     MedialAxis old = medial_axis;
+    /* medial_axis.prune_points(0.05); */
 
     // setup renderer
     m_renderer = new GeometryWidget();
@@ -74,7 +77,6 @@ StenomapDemo::StenomapDemo() {
     m_renderer->setGridMode(GeometryWidget::GridMode::CARTESIAN);
     setCentralWidget(m_renderer);
 
-    medial_axis.prune_points(0.05);
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
             recalculate(medial_axis, old);
@@ -82,13 +84,7 @@ StenomapDemo::StenomapDemo() {
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
-    /* recalculate(medial_axis); */
     recalculate(medial_axis, old);
-    /* MedialAxis ma(polygon);
-       ma.print_adjacency_list();
-       ma.compute_branches();
-       ma.remove_branch(0);
-       ma.print_adjacency_list(); */
 }
 
 void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old) {

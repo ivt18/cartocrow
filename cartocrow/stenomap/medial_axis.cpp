@@ -333,9 +333,9 @@ namespace cartocrow::medial_axis {
 
     void MedialAxis::print_grid_closest_branches() {
         std::cout << "Printing grid closest branches" << std::endl;
-        for (auto closest_branch : grid_closest_branches) {
-            std::cout << closest_branch.first << std::endl;
-            for (auto point : *(closest_branch.second)) {
+        for (int i = 0; i < branches.size(); i++) {
+            std::cout << "branch index :" << i << std::endl;
+            for (auto point : branch_closest_grid_points[branches[i]]) {
                 std::cout << "\t" << point << std::endl;
             }
             std::cout << std::endl;
