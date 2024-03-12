@@ -309,13 +309,13 @@ namespace cartocrow::medial_axis {
         // TODO: optimize this to not go over all branches
         for (auto row : grid) {
             for (auto point : row) {
-                double min_sqr_distance = -1;
+                double min_sqr_distance = INFINITY;
                 double cur_sqr_distance;
                 for (auto branch : branches) {
                     for (auto i = branch.begin(); i != branch.end() && (i+1) != branch.end(); i++) {
                         Segment<Inexact> cur_segment(*i, *(i+1));
                         cur_sqr_distance = CGAL::squared_distance(point, cur_segment);
-                        if (min_sqr_distance == -1 || cur_sqr_distance < min_sqr_distance) {
+                        if (cur_sqr_distance < min_sqr_distance) {
                             min_sqr_distance = cur_sqr_distance;
                             /* std::cout << "branch to point: " << point << std::endl; */
                             grid_closest_branches[point] = branch;

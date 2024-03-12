@@ -73,7 +73,7 @@ StenomapDemo::StenomapDemo() {
 
     // setup renderer
     m_renderer = new GeometryWidget();
-    m_renderer->setMaxZoom(10);
+    m_renderer->setMaxZoom(1000);
     m_renderer->setGridMode(GeometryWidget::GridMode::CARTESIAN);
     setCentralWidget(m_renderer);
 
