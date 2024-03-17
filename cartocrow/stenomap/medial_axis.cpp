@@ -305,36 +305,38 @@ namespace cartocrow::medial_axis {
 
     void MedialAxis::compute_grid_closest_branches() {
         // TODO: optimize this to not go over all branches
-        for (auto row : grid) {
+        for (auto row : grid_pruned) {
             for (auto point : row) {
-                double min_sqr_distance = -1;
+                double min_sqr_distance = INFINITY;
                 double cur_sqr_distance;
                 for (auto branch : branches) {
                     for (auto i = branch.begin(); i != branch.end() && (i+1) != branch.end(); i++) {
                         Segment<Inexact> cur_segment(*i, *(i+1));
                         cur_sqr_distance = CGAL::squared_distance(point, cur_segment);
-                        if (min_sqr_distance == -1 || cur_sqr_distance < min_sqr_distance) {
+                        if (cur_sqr_distance < min_sqr_distance) {
                             min_sqr_distance = cur_sqr_distance;
-                            /* std::cout << "branch to point: " << point << std::endl; */
-                            grid_closest_branches[point] = &branch;
+                            grid_closest_branches[point] = branch;
                         }
                     }
                 }
             }
         }
-        for (auto row : grid) {
+        for (auto row : grid_pruned) {
             for (auto point : row) {
-                branch_closest_grid_points[*grid_closest_branches[point]].push_back(&point);
+                std::cout << point << std::endl;
+                branch_closest_grid_points[grid_closest_branches[point]].push_back(&point);
             }
         }
     }
 
     void MedialAxis::print_grid_closest_branches() {
         std::cout << "Printing grid closest branches" << std::endl;
+            std::cout << "branch size:" << branch_closest_grid_points.size() << std::endl;
         for (int i = 0; i < branches.size(); i++) {
             std::cout << "branch index :" << i << std::endl;
+            std::cout << "branch size:" << branch_closest_grid_points[branches[i]].size() << std::endl;
             for (auto point : branch_closest_grid_points[branches[i]]) {
-                std::cout << "\t" << point << std::endl;
+                std::cout << *point << std::endl;
             }
             std::cout << std::endl;
         }
