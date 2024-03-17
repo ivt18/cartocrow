@@ -7,7 +7,7 @@ PrunedGridPainting::PrunedGridPainting(medial_axis::MedialAxis medial_axis)
 
 void PrunedGridPainting::paint(renderer::GeometryRenderer& renderer) const {
     renderer.setMode(renderer::GeometryRenderer::vertices);
-    renderer.setStroke(Color{100,255,100}, 1);
+    renderer.setStroke(Color{255,255,0}, 1);
     for (auto point : _medial_axis.get_pruned_grid()) {
         renderer.draw(point);
     }
