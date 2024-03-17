@@ -91,14 +91,12 @@ namespace cartocrow::medial_axis {
             std::vector<Point<Inexact>> pruned_row;
             for (const auto& point : row) {
                 if (CGAL::bounded_side_2(polygon.vertices_begin(), polygon.vertices_end(), point) != CGAL::ON_UNBOUNDED_SIDE) {
-                    pruned_row.push_back(point);
+                    grid_pruned.push_back(point);
                 }
             }
-            grid_pruned.push_back(pruned_row);
         }
     }
 
-    
     void MedialAxis::remove_vertex(const Point<Inexact>& s) {
         // Remove s from the adjacency lists of its neighbors.
         for (const auto& neighbor : graph[s]) {
@@ -207,6 +205,15 @@ namespace cartocrow::medial_axis {
         for (size_t i = 0; i < branch.size() - 1; ++i) {
             remove_vertex(branch[i]);
         }
+        for (auto p : branch_closest_grid_points[branches[index]]) {
+            auto it = std::find_if(grid_pruned.begin(), grid_pruned.end(), [p](const Point<Inexact> point) {
+                return &point == p;
+            });
+            if (it != grid_pruned.end()) {
+                grid_pruned.erase(it);
+                std::cout << "removed a point!" << std::endl;
+            }
+        }
     }
 
      std::vector<Point<Inexact>> MedialAxis::get_points_not_in_branch(int i) {
@@ -229,35 +236,17 @@ namespace cartocrow::medial_axis {
 
     // For each branch, count number of points of the grid that have the branch as the closest centroid and are not in the neighbourhood of any other centroid
     int MedialAxis::get_branch_weight(int i) {
-        // std::vector<Point<Inexact>> points_not_in_branch = get_points_not_in_branch(i);
-        Branch<Inexact> branch = branches[i];
-        int weight = 0;
-        Point<Inexact> point_not = branch.back();
-        for (int k = 0; k < branch.size() - 1; k++) {
-            std::list<Point<Inexact>> closest_points = centroid_closest_points[branch[k]];
-            for (const auto& point: closest_points) {
-                bool stop = false;
-                for (const auto& point_neigh: centroid_neighborhoods[point_not]) {
-                    if (point == point_neigh) {
-                        stop = true;
-                        break;
-                    }
-                }
-                if (!stop) {
-                    weight++;
-                }
-            }
-            weight += centroid_area_lost[branch[k]];
+        int weight = branch_closest_grid_points[branches[i]].size();
+        for (int k = 0; k < branches[i].size()-1; k++) {
+            weight += centroid_area_lost[branches[i][k]];
         }
-        std::cout << "weight for branch " << i << " is = " << weight << std::endl;
         return weight;
     }
+
     void MedialAxis::prune_points(double t) {
         compute_branches();
-        int grid_size = 0;
-        for (const auto& row : grid_pruned) {
-            grid_size += row.size();
-        }
+        compute_grid_closest_branches();
+        int grid_size = grid_pruned.size();
         while (true) {
             double minWeight = INFINITY;
             int minIndex = -1;
@@ -282,6 +271,7 @@ namespace cartocrow::medial_axis {
             std::cout << std::endl;
             std::cout << std::endl;
             compute_branches();
+            compute_grid_closest_branches();
             centroid_area_lost[branches[minIndex].back()] += minWeight;
         }
     }
@@ -304,11 +294,13 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::compute_grid_closest_branches() {
+        grid_closest_branches.clear();
+        branch_closest_grid_points.clear();
         // TODO: optimize this to not go over all branches
-        for (auto row : grid_pruned) {
-            for (auto point : row) {
-                double min_sqr_distance = INFINITY;
-                double cur_sqr_distance;
+        for (auto point: grid_pruned) {
+            double min_sqr_distance = INFINITY;
+            double cur_sqr_distance;
+            /* if (removed_grid_points.find(&point) == removed_grid_points.end()) { */
                 for (auto branch : branches) {
                     for (auto i = branch.begin(); i != branch.end() && (i+1) != branch.end(); i++) {
                         Segment<Inexact> cur_segment(*i, *(i+1));
@@ -319,13 +311,10 @@ namespace cartocrow::medial_axis {
                         }
                     }
                 }
-            }
+            /* } */
         }
-        for (auto row : grid_pruned) {
-            for (auto point : row) {
-                std::cout << point << std::endl;
-                branch_closest_grid_points[grid_closest_branches[point]].push_back(&point);
-            }
+        for (auto& point : grid_pruned) {
+            branch_closest_grid_points[grid_closest_branches[point]].push_back(&point);
         }
     }
 
@@ -336,7 +325,7 @@ namespace cartocrow::medial_axis {
             std::cout << "branch index :" << i << std::endl;
             std::cout << "branch size:" << branch_closest_grid_points[branches[i]].size() << std::endl;
             for (auto point : branch_closest_grid_points[branches[i]]) {
-                std::cout << *point << std::endl;
+                std::cout << point->x() << "," << point->y() << std::endl;
             }
             std::cout << std::endl;
         }

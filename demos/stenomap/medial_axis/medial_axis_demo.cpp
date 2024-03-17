@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "medial_axis_painting.h"
 #include "pruned_medial_axis_painting.h"
 #include "grid_painting.h"
+#include "pruned_grid_painting.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -49,27 +50,26 @@ StenomapDemo::StenomapDemo() {
        polygon.push_back(Point<Inexact>(40, 30));
        polygon.push_back(Point<Inexact>(60, 60));*/ 
     polygon.push_back( Point<Inexact>(-1,-1) ) ;
-    polygon.push_back( Point<Inexact>(0,-12) ) ;
+    polygon.push_back( Point<Inexact>(0,-22) ) ;
     polygon.push_back( Point<Inexact>(1,-1) ) ;
-    polygon.push_back( Point<Inexact>(12,0) ) ;
+    polygon.push_back( Point<Inexact>(32,0) ) ;
     polygon.push_back( Point<Inexact>(1,1) ) ;
-    polygon.push_back( Point<Inexact>(0,12) ) ;
+    polygon.push_back( Point<Inexact>(0,42) ) ;
     polygon.push_back( Point<Inexact>(-1,1) ) ;
     polygon.push_back( Point<Inexact>(-12,0) ) ;
     m_polygons.push_back(polygon);
 
     MedialAxis medial_axis(polygon);
-    medial_axis.compute_grid(10, 10);
+    medial_axis.compute_grid(300, 300);
     medial_axis.prune_grid();
     // medial_axis.calculate_weight_function();
     // medial_axis.compute_centroid_neighborhoods();
     // medial_axis.compute_centroid_closest_points();
-    medial_axis.compute_branches();
-    medial_axis.compute_grid_closest_branches();
-    medial_axis.print_grid_closest_branches();
+    /* medial_axis.compute_branches(); */
+    /* medial_axis.compute_grid_closest_branches(); */
 
     MedialAxis old = medial_axis;
-    /* medial_axis.prune_points(0.05); */
+    medial_axis.prune_points(0.25);
 
     // setup renderer
     m_renderer = new GeometryWidget();
@@ -97,6 +97,8 @@ void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis ol
         m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(medial_axis), "Pruned medial Axis");
         // Draw grid
         m_renderer->addPainting(std::make_shared<GridPainting>(medial_axis), "Grid");
+        // Draw pruned grid
+        m_renderer->addPainting(std::make_shared<PrunedGridPainting>(medial_axis), "Pruned grid");
     }
 }
 

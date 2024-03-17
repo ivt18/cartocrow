@@ -42,9 +42,11 @@ typedef boost::shared_ptr<Ss> SsPtr;
 
 template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
 template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
+template <typename K> using SimpleGrid = std::vector<Point<K>>;
 template <typename K> using Branch = std::vector<Point<K>>;
 template <typename K> using BranchClosestGridPoints = std::map<Branch<K>, std::vector<Point<K>*>>;
 template <typename K> using GridClosestBranches = std::map<Point<K>, Branch<K>>;
+template <typename K> using RemovedGridPoints = std::unordered_set<Point<K>*>;
 
 template <typename K> using RadiusList = std::map<Point<K>, double>;
 template <typename K> using AreaLostList = std::map<Point<K>, int>;
@@ -67,12 +69,14 @@ class MedialAxis {
     Grid<Inexact> grid;
 
 	// grid of points inside the polygon with pruning
-	Grid<Inexact> grid_pruned;
+	SimpleGrid<Inexact> grid_pruned;
 
     // closest branches for each grid point
     GridClosestBranches<Inexact> grid_closest_branches;
 
     BranchClosestGridPoints<Inexact> branch_closest_grid_points;
+
+    RemovedGridPoints<Inexact> removed_grid_points;
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
@@ -128,7 +132,7 @@ class MedialAxis {
         return grid;
     }
 
-	Grid<Inexact> get_pruned_grid() const {
+	SimpleGrid<Inexact> get_pruned_grid() const {
         return grid_pruned;
     }
 };
