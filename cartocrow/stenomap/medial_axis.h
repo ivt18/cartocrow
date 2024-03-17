@@ -108,8 +108,8 @@ class MedialAxis {
 	AdjacencyList<Inexact> temporary_remove_branch(int index);
 	// Prunes the points of the medial axis, using parameter t as threshold
 	void prune_points(double t);
-    // Computes the grid of points containing the polygon
-    void compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge);
+    // Computes the (points_x * points_y) grid of points containing the polygon
+    void compute_grid(unsigned int points_x, unsigned int points_y);
 	void compute_centroid_neighborhoods();
 	void compute_centroid_closest_points();
 

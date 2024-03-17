@@ -286,21 +286,19 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    void MedialAxis::compute_grid(unsigned int cells_x, unsigned int cells_y, unsigned int points_per_cell_edge) {
+    void MedialAxis::compute_grid(unsigned int points_x, unsigned int points_y) {
         Point<Inexact> top_left, bottom_right;
         CGAL::Bbox_2 bbox = polygon.bbox();
         top_left = Point<Inexact>(bbox.xmin(), bbox.ymax());
         bottom_right = Point<Inexact>(bbox.xmax(), bbox.ymin());
-        double cell_width = (bottom_right.x() - top_left.x()) / cells_x;
-        double cell_height = (top_left.y() - bottom_right.y()) / cells_y;
-        for (unsigned int curr_y = 0; curr_y <= cells_y; curr_y++) {
-            std::vector<Point<Inexact>> row(cells_x * points_per_cell_edge + 1);
-            double delta_y = cell_height * curr_y;
-            for (unsigned int curr_x = 0; curr_x < cells_x; curr_x++) {
-                double delta_x = cell_width * curr_x;
-                row[curr_x] = Point<Inexact>(top_left.x() + delta_x, top_left.y() - delta_y);
+        auto height = (top_left.y() - bottom_right.y()) / (points_y - 1);
+        auto width = (bottom_right.x() - top_left.x()) / (points_x - 1);
+        for (unsigned int y = 0; y < points_y; y++) {
+            std::vector<Point<Inexact>> row(points_x);
+            auto delta_y = y * height;
+            for (unsigned int x = 0; x < points_x; x++) {
+                row[x] = Point<Inexact>(top_left.x() + width * x, top_left.y() - delta_y);
             }
-            row.back() = Point<Inexact>(bottom_right.x(), top_left.y() - delta_y); // add the right-most point in the row
             grid.push_back(row);
         }
     }
