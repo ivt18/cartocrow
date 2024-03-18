@@ -45,14 +45,12 @@ StenomapDemo::StenomapDemo() {
 
     // Make simple polygon
     Polygon<Inexact> polygon;
-    /* polygon.push_back(Point<Inexact>(80, 50));
-       polygon.push_back(Point<Inexact>(90, 4));
-       polygon.push_back(Point<Inexact>(40, 30));
-       polygon.push_back(Point<Inexact>(60, 60));*/ 
     polygon.push_back( Point<Inexact>(-1,-1) ) ;
+    /* polygon.push_back( Point<Inexact>(-4,-22) ) ; */
     polygon.push_back( Point<Inexact>(0,-22) ) ;
     polygon.push_back( Point<Inexact>(1,-1) ) ;
     polygon.push_back( Point<Inexact>(32,0) ) ;
+    /* polygon.push_back( Point<Inexact>(32,20) ) ; */
     polygon.push_back( Point<Inexact>(1,1) ) ;
     polygon.push_back( Point<Inexact>(0,42) ) ;
     polygon.push_back( Point<Inexact>(-1,1) ) ;
@@ -60,7 +58,7 @@ StenomapDemo::StenomapDemo() {
     m_polygons.push_back(polygon);
 
     MedialAxis medial_axis(polygon);
-    medial_axis.compute_grid(300, 300);
+    medial_axis.compute_grid(100, 100);
     medial_axis.prune_grid();
     // medial_axis.calculate_weight_function();
     // medial_axis.compute_centroid_neighborhoods();

@@ -35,7 +35,6 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::calculate_weight_function() {
-         
         for (const auto& vertex: graph) {
             const Point<Inexact>& current_point = vertex.first;
             double radius = INFINITY;
@@ -206,12 +205,12 @@ namespace cartocrow::medial_axis {
             remove_vertex(branch[i]);
         }
         for (auto p : branch_closest_grid_points[branches[index]]) {
-            auto it = std::find_if(grid_pruned.begin(), grid_pruned.end(), [p](const Point<Inexact> point) {
-                return &point == p;
-            });
-            if (it != grid_pruned.end()) {
-                grid_pruned.erase(it);
-                std::cout << "removed a point!" << std::endl;
+            for (auto it = grid_pruned.begin(); it != grid_pruned.end(); it++) {
+                double dist = CGAL::squared_distance(*p, *it);
+                if (dist < 0.01) {
+                    grid_pruned.erase(it);
+                    break;
+                }
             }
         }
     }
@@ -244,6 +243,7 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::prune_points(double t) {
+        calculate_weight_function();
         compute_branches();
         compute_grid_closest_branches();
         int grid_size = grid_pruned.size();
@@ -300,18 +300,18 @@ namespace cartocrow::medial_axis {
         for (auto point: grid_pruned) {
             double min_sqr_distance = INFINITY;
             double cur_sqr_distance;
-            /* if (removed_grid_points.find(&point) == removed_grid_points.end()) { */
-                for (auto branch : branches) {
-                    for (auto i = branch.begin(); i != branch.end() && (i+1) != branch.end(); i++) {
-                        Segment<Inexact> cur_segment(*i, *(i+1));
-                        cur_sqr_distance = CGAL::squared_distance(point, cur_segment);
-                        if (cur_sqr_distance < min_sqr_distance) {
-                            min_sqr_distance = cur_sqr_distance;
-                            grid_closest_branches[point] = branch;
-                        }
+            double rad_sqr_distance;
+            for (auto branch : branches) {
+                for (auto i = branch.begin(); i != branch.end() && (i+1) != branch.end(); i++) {
+                    Segment<Inexact> cur_segment(*i, *(i+1));
+                    cur_sqr_distance = CGAL::squared_distance(point, cur_segment);
+                    rad_sqr_distance = CGAL::squared_distance(point, branch.back());
+                    if (cur_sqr_distance < min_sqr_distance && rad_sqr_distance >= radius_list[branch.back()]) {
+                        min_sqr_distance = cur_sqr_distance;
+                        grid_closest_branches[point] = branch;
                     }
                 }
-            /* } */
+            }
         }
         for (auto& point : grid_pruned) {
             branch_closest_grid_points[grid_closest_branches[point]].push_back(&point);
