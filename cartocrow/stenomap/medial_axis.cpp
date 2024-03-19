@@ -4,29 +4,6 @@
 #include <cmath>
 #include <unordered_map>
 
-/* namespace cartocrow::tree {
-
-    TreeNode::TreeNode(const Point<Inexact>& v) {
-        vertex = v;
-    }
-
-    void TreeNode::add_child(TreeNode *n) {
-        children.push_back(n);
-    }
-
-    std::vector<TreeNode*>::const_iterator TreeNode::children_begin() {
-        return children.begin();
-    }
-
-    std::vector<TreeNode*>::const_iterator TreeNode::children_end() {
-        return children.end();
-    }
-
-    TreeNode Tree::get_root() {
-        return root;
-    }
-} // namespace cartocrow::tree */
-
 namespace cartocrow::medial_axis {
 
     void MedialAxis::add_vertex(const Point<Inexact>& s) {
