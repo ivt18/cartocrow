@@ -50,6 +50,9 @@ include_directories(${CGAL_INCLUDE_DIR})
 link_libraries(${CGAL_LIBRARIES})
 find_package(GMP REQUIRED)
 
+# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+# set (CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 find_package(glog REQUIRED)

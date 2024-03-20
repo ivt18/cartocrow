@@ -44,8 +44,8 @@ template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K
 template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
 template <typename K> using SimpleGrid = std::vector<Point<K>>;
 template <typename K> using Branch = std::vector<Point<K>>;
-template <typename K> using BranchClosestGridPoints = std::map<Branch<K>, std::vector<Point<K>*>>;
-template <typename K> using GridClosestBranches = std::map<Point<K>, Branch<K>>;
+template <typename K> using BranchClosestGridPoints = std::map<int, std::vector<int>>;
+template <typename K> using GridClosestBranches = std::map<int, int>;
 template <typename K> using RemovedGridPoints = std::unordered_set<Point<K>*>;
 
 template <typename K> using RadiusList = std::map<Point<K>, double>;
@@ -80,6 +80,7 @@ class MedialAxis {
 
 	// branch list
 	std::vector<Branch<Inexact>> branches;
+    std::vector<Segment<Inexact>> noBranchSegments; // To store segments not in any branch
 
 	// Map between a centroid and the area lost
 	AreaLostList<Inexact> centroid_area_lost;

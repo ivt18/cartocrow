@@ -58,7 +58,7 @@ StenomapDemo::StenomapDemo() {
     m_polygons.push_back(polygon);
 
     MedialAxis medial_axis(polygon);
-    medial_axis.compute_grid(100, 100);
+    medial_axis.compute_grid(500, 500);
     medial_axis.prune_grid();
     // medial_axis.calculate_weight_function();
     // medial_axis.compute_centroid_neighborhoods();
