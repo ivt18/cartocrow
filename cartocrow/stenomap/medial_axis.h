@@ -4,36 +4,6 @@
 #include "../core/core.h"
 #include <CGAL/create_straight_skeleton_2.h>
 
-/* namespace cartocrow::tree {
-
-// TODO: put this somewhere else
-class TreeNode {
-    private:        
-        Point<Inexact> vertex;
-        std::vector<TreeNode*> children;
-
-    public:
-        // Constructs a new tree node with vertex v
-        TreeNode(const Point<Inexact>& v);
-        // Adds node n as a child
-        void add_child(TreeNode *n);
-        // Returns const iterator to beginning of children of node
-        std::vector<TreeNode*>::const_iterator children_begin();
-        // Returns const iterator to end of children of node
-        std::vector<TreeNode*>::const_iterator children_end();
-};
-
-class Tree {
-    private:
-        TreeNode root;
-
-    public:
-        Tree();
-        TreeNode get_root();
-};
-
-} */
-
 // TODO: properly define all of this
 namespace cartocrow::medial_axis {
 typedef CGAL::Straight_skeleton_2<Inexact> Ss;
