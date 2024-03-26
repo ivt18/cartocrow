@@ -63,11 +63,13 @@ StenomapDemo::StenomapDemo() {
     // medial_axis.calculate_weight_function();
     // medial_axis.compute_centroid_neighborhoods();
     // medial_axis.compute_centroid_closest_points();
-    /* medial_axis.compute_branches(); */
+    medial_axis.compute_branches();
     /* medial_axis.compute_grid_closest_branches(); */
 
     MedialAxis old = medial_axis;
-    medial_axis.prune_points(0.25);
+    medial_axis.retract_end_branches(0.3);
+    // medial_axis.prune_points(0.25);
+    
 
     // setup renderer
     m_renderer = new GeometryWidget();
@@ -90,9 +92,9 @@ void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis ol
         // Draw polygon
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
         // Draw medial axis
-        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(old), "Medial Axis");
+        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(medial_axis), "Medial Axis");
         // Draw pruned medial axis
-        m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(medial_axis), "Pruned medial Axis");
+        m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(old), "Pruned medial Axis");
         // Draw grid
         m_renderer->addPainting(std::make_shared<GridPainting>(medial_axis), "Grid");
         // Draw pruned grid

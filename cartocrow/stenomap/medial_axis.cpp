@@ -345,35 +345,37 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::retract_end_branches(double retraction_percentage) {
-    for (auto& branch : branches) {
+    for (int j = 0; j < branches.size(); j++) {
         double total_length = 0.0;
-        for (size_t i = 0; i < branch.size() - 1; i++) {
-            total_length += std::sqrt(CGAL::squared_distance(branch[i], branch[i + 1]));
+        for (size_t i = 0; i < branches[j].size() - 1; i++) {
+            total_length += std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
         }
 
-        double retract_length = total_length * (retraction_percentage / 100.0);
+        double retract_length = total_length * (retraction_percentage);
         
         double retracted_length = 0.0;
-        size_t last_index = branch.size() - 1; 
-        for (size_t i = branch.size() - 1; i > 0; i--) {
-            double segment_length = std::sqrt(CGAL::squared_distance(branch[i], branch[i - 1]));
+        size_t last_index = branches[j].size() - 1; 
+        for (size_t i = 0; i < branches[j].size() - 1; i++) {
+            double segment_length = std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
 
             if (retracted_length + segment_length >= retract_length) {
                 // Find the new point to insert based on the remaining length to retract
                 double remaining_length = retract_length - retracted_length;
                 double ratio = remaining_length / segment_length;
                 
-                Point<Inexact> new_point = interpolate(branch[i - 1], branch[i], ratio);
+                Point<Inexact> new_point = interpolate(branches[j][i], branches[j][i + 1], ratio);
                 
-                branch[i - 1] = new_point; // Replace the point at i-1 with the new point
-                last_index = i - 1; 
-                break; 
+                branches[j][i] = new_point; // Replace the point at i-1 with the new point
+                last_index = i; 
                 retracted_length += segment_length;
+                 
+                break;
             }
         }
 
         // remove the retracted part of the branch
-        branch.erase(branch.begin() + last_index + 1, branch.end());
+        branches[j].erase(branches[j].begin(),branches[j].begin() + last_index);
+        std::cout << "Branch " << j << " retracted to size " << branches[j].size() << std::endl;
     }
 }
 

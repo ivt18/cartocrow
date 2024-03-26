@@ -104,6 +104,10 @@ class MedialAxis {
     AdjacencyList<Inexact> get_graph() const {
         return graph;
     }
+	// Return branches of the medial axis
+	std::vector<Branch<Inexact>> get_branches() const {
+		return branches;
+	}
     Grid<Inexact> get_grid() const {
         return grid;
     }
