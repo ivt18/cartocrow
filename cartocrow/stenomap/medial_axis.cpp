@@ -344,6 +344,63 @@ namespace cartocrow::medial_axis {
         }
     }
 
+    void MedialAxis::retract_end_branches(double retraction_percentage) {
+    for (auto& branch : branches) {
+        double total_length = 0.0;
+        for (size_t i = 0; i < branch.size() - 1; i++) {
+            total_length += std::sqrt(CGAL::squared_distance(branch[i], branch[i + 1]));
+        }
+
+        double retract_length = total_length * (retraction_percentage / 100.0);
+        
+        double retracted_length = 0.0;
+        size_t last_index = branch.size() - 1; 
+        for (size_t i = branch.size() - 1; i > 0; i--) {
+            double segment_length = std::sqrt(CGAL::squared_distance(branch[i], branch[i - 1]));
+
+            if (retracted_length + segment_length >= retract_length) {
+                // Find the new point to insert based on the remaining length to retract
+                double remaining_length = retract_length - retracted_length;
+                double ratio = remaining_length / segment_length;
+                
+                Point<Inexact> new_point = interpolate(branch[i - 1], branch[i], ratio);
+                
+                branch[i - 1] = new_point; // Replace the point at i-1 with the new point
+                last_index = i - 1; 
+                break; 
+                retracted_length += segment_length;
+            }
+        }
+
+        // remove the retracted part of the branch
+        branch.erase(branch.begin() + last_index + 1, branch.end());
+    }
+}
+
+//compute the last new leaf
+Point<Inexact> MedialAxis::interpolate(const Point<Inexact>& start, const Point<Inexact>& end, double ratio) {
+    auto x = start.x() + ratio * (end.x() - start.x());
+    auto y = start.y() + ratio * (end.y() - start.y());
+    return Point<Inexact>(x, y);
+}
+
+
+void MedialAxis::apply_modified_negative_offset(double constant_offset, double min_radius) {
+    // iterate through each vertex-radius pair in the radius_list.
+    for (auto& vertex_radius_pair : radius_list) {
+        // reduce the radius by the constant offset.
+        double new_radius = vertex_radius_pair.second - constant_offset;
+
+        // ensure the new radius does not fall under the min threshold.
+        // if it does, set it to the mini theshold.
+        if (new_radius < min_radius) {
+            new_radius = min_radius;
+        }
+
+        vertex_radius_pair.second = new_radius;
+    }
+}
+
     MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
         assert(shape.is_counterclockwise_oriented());
         polygon = shape;

@@ -93,6 +93,11 @@ class MedialAxis {
 
 	void prune_grid();
 
+	void retract_end_branches(double retraction_percentage);
+    void apply_modified_negative_offset(double constant_offset, double min_radius);
+    Point<Inexact> interpolate(const Point<Inexact>& start, const Point<Inexact>& end, double ratio);
+
+
 	std::vector<Point<Inexact>> get_points_not_in_branch(int i);
 
     // Getters
