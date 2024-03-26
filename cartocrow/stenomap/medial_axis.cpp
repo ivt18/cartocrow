@@ -13,6 +13,7 @@ namespace cartocrow::medial_axis {
     }
 
     void MedialAxis::calculate_weight_function() {
+        radius_list.clear();
         for (const auto& vertex: graph) {
             const Point<Inexact>& current_point = vertex.first;
             double radius = INFINITY;
@@ -364,7 +365,9 @@ namespace cartocrow::medial_axis {
                 double ratio = remaining_length / segment_length;
                 
                 Point<Inexact> new_point = interpolate(branches[j][i], branches[j][i + 1], ratio);
-                
+                remove_vertex(branches[j][i + 1]);
+                remove_vertex(branches[j][i]);
+                add_edge(new_point, branches[j][i + 1]);
                 branches[j][i] = new_point; // Replace the point at i-1 with the new point
                 last_index = i; 
                 retracted_length += segment_length;

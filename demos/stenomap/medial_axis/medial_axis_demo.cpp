@@ -68,7 +68,7 @@ StenomapDemo::StenomapDemo() {
 
     MedialAxis old = medial_axis;
     medial_axis.retract_end_branches(0.3);
-    
+    medial_axis.calculate_weight_function();
     medial_axis.apply_modified_negative_offset(0.5, 0.1);
     // medial_axis.prune_points(0.25);
     
