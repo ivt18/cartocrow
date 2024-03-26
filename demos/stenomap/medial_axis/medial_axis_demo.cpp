@@ -36,38 +36,53 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/geometry_renderer.h"
 
+#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/core/region_map.h"
+#include <ipedoc.h>
+#include <ipepath.h>
+
 using namespace cartocrow;
 using namespace cartocrow::renderer;
 using namespace cartocrow::medial_axis;
 
 StenomapDemo::StenomapDemo() {
     setWindowTitle("CartoCrow – Stenomap demo");
+    std::filesystem::path ipePath = "/home/diego/src/cartocrow/data/europe.ipe";
+	RegionMap map = ipeToRegionMap(ipePath);
+    Polygon<Inexact> pgon;
+    PolygonSet<Exact> polygonSet = map["ESP"].shape;
+	std::vector<PolygonWithHoles<Exact>> polygons;
+	polygonSet.polygons_with_holes(std::back_inserter(polygons));
+    double maxArea = 0;
+	for (const PolygonWithHoles<Exact> p : polygons) {
+        if (approximate(p.outer_boundary()).area() > maxArea) {
+            pgon = approximate(p.outer_boundary());
+            maxArea = pgon.area();
+        }
+	}
+    m_polygons.push_back(pgon);
+    MedialAxis medial_axis(pgon);
 
-    // Make simple polygon
-    Polygon<Inexact> polygon;
-    polygon.push_back( Point<Inexact>(-1,-1) ) ;
-    /* polygon.push_back( Point<Inexact>(-4,-22) ) ; */
-    polygon.push_back( Point<Inexact>(0,-22) ) ;
-    polygon.push_back( Point<Inexact>(1,-1) ) ;
-    polygon.push_back( Point<Inexact>(32,0) ) ;
-    /* polygon.push_back( Point<Inexact>(32,20) ) ; */
-    polygon.push_back( Point<Inexact>(1,1) ) ;
-    polygon.push_back( Point<Inexact>(0,42) ) ;
-    polygon.push_back( Point<Inexact>(-1,1) ) ;
-    polygon.push_back( Point<Inexact>(-12,0) ) ;
-    m_polygons.push_back(polygon);
+    /* Polygon<Inexact> polygon; */
+    /* // Make simple polygon */
+    /* polygon.push_back( Point<Inexact>(-1,-1) ) ; */
+    /* /1* polygon.push_back( Point<Inexact>(-4,-22) ) ; *1/ */
+    /* polygon.push_back( Point<Inexact>(0,-22) ) ; */
+    /* polygon.push_back( Point<Inexact>(1,-1) ) ; */
+    /* polygon.push_back( Point<Inexact>(32,0) ) ; */
+    /* /1* polygon.push_back( Point<Inexact>(32,20) ) ; *1/ */
+    /* polygon.push_back( Point<Inexact>(1,1) ) ; */
+    /* polygon.push_back( Point<Inexact>(0,42) ) ; */
+    /* polygon.push_back( Point<Inexact>(-1,1) ) ; */
+    /* polygon.push_back( Point<Inexact>(-12,0) ) ; */
+    /* m_polygons.push_back(polygon); */
+    /* MedialAxis medial_axis(polygon); */
 
-    MedialAxis medial_axis(polygon);
-    medial_axis.compute_grid(500, 500);
+    medial_axis.compute_grid(300, 300);
     medial_axis.prune_grid();
-    // medial_axis.calculate_weight_function();
-    // medial_axis.compute_centroid_neighborhoods();
-    // medial_axis.compute_centroid_closest_points();
-    /* medial_axis.compute_branches(); */
-    /* medial_axis.compute_grid_closest_branches(); */
 
     MedialAxis old = medial_axis;
-    medial_axis.prune_points(0.25);
+    /* medial_axis.prune_points(0.25); */
 
     // setup renderer
     m_renderer = new GeometryWidget();

@@ -236,6 +236,7 @@ namespace cartocrow::medial_axis {
         compute_branches();
         compute_grid_closest_branches();
         int grid_size = grid_pruned.size();
+        int removedArea = 0;
         while (true) {
             double minWeight = INFINITY;
             int minIndex = -1;
@@ -256,12 +257,16 @@ namespace cartocrow::medial_axis {
             std::cout << "removing branch " << minIndex << " with endpoint " << branches[minIndex][0] << std::endl;
             remove_branch(minIndex);
             /* std::cout << "graph size = " << graph.size() << std::endl; */
-            std::cout << std::endl;
-            std::cout << std::endl;
             /* std::cout << std::endl; */
             compute_branches();
             compute_grid_closest_branches();
             centroid_area_lost[branches[minIndex].back()] += minWeight;
+            removedArea += minWeight;
+            std::cout << "total " << grid_size << std::endl;
+            std::cout << "removed " << removedArea << std::endl;
+            std::cout << "remaining branches: " << branches.size() << std::endl;
+            std::cout << std::endl;
+            std::cout << std::endl;
         }
     }
 
