@@ -60,14 +60,16 @@ StenomapDemo::StenomapDemo() {
     MedialAxis medial_axis(polygon);
     medial_axis.compute_grid(500, 500);
     medial_axis.prune_grid();
-    // medial_axis.calculate_weight_function();
-    // medial_axis.compute_centroid_neighborhoods();
-    // medial_axis.compute_centroid_closest_points();
+    medial_axis.calculate_weight_function();
+    medial_axis.compute_centroid_neighborhoods();
+    medial_axis.compute_centroid_closest_points();
     medial_axis.compute_branches();
-    /* medial_axis.compute_grid_closest_branches(); */
+    medial_axis.compute_grid_closest_branches(); 
 
     MedialAxis old = medial_axis;
     medial_axis.retract_end_branches(0.3);
+    
+    medial_axis.apply_modified_negative_offset(0.5, 0.1);
     // medial_axis.prune_points(0.25);
     
 

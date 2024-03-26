@@ -375,7 +375,6 @@ namespace cartocrow::medial_axis {
 
         // remove the retracted part of the branch
         branches[j].erase(branches[j].begin(),branches[j].begin() + last_index);
-        std::cout << "Branch " << j << " retracted to size " << branches[j].size() << std::endl;
     }
 }
 
@@ -391,14 +390,16 @@ void MedialAxis::apply_modified_negative_offset(double constant_offset, double m
     // iterate through each vertex-radius pair in the radius_list.
     for (auto& vertex_radius_pair : radius_list) {
         // reduce the radius by the constant offset.
+        std :: cout << "Applying modified negative offset..." << std::endl;
         double new_radius = vertex_radius_pair.second - constant_offset;
-
+        
         // ensure the new radius does not fall under the min threshold.
         // if it does, set it to the mini theshold.
         if (new_radius < min_radius) {
             new_radius = min_radius;
         }
-
+        // print old vs new radious
+        std::cout << "Old radius: " << vertex_radius_pair.second << " New radius: " << new_radius << std::endl;
         vertex_radius_pair.second = new_radius;
     }
 }
