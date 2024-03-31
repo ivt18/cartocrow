@@ -118,11 +118,13 @@ namespace cartocrow::medial_axis {
   
         // Identify endpoints and junction points
         std::set<Point<Inexact>> endpoints, junctions;
+        endpoints.clear();
+        junctions.clear();
         for (const auto& entry : graph) {
             size_t degree = entry.second.size();
             if (degree == 2) { // Endpoint
                 endpoints.insert(entry.first);
-            } else if (degree > 3) { // Junction point
+            } else if (degree > 4) { // Junction point
                 junctions.insert(entry.first);
             }
         }
@@ -193,17 +195,18 @@ namespace cartocrow::medial_axis {
 
     void MedialAxis::remove_branch(int index) {
         Branch<Inexact> branch = branches[index];
-        // Due to implementation of compute_branches(), the junction point will be the last point 
-        // in the branch vector, which we should not remove when removing the branch
+
+        // If the branch only contains the junction point or is empty, nothing to remove.
         if (branch.size() <= 1) {
-            // If the branch only contains the junction point or is empty, nothing to remove.
             return;
         }
 
+        // Due to implementation of compute_branches(), the junction point will be the last point 
+        // in the branch vector, which we should not remove when removing the branch
         for (int i = 0; i < branch.size() - 1; ++i) {
             remove_vertex(branch[i]);
         }
-        /* Point<Inexact> testp(219.52, 233.97); */
+
         for (int j = 0; j < branch_closest_grid_points[index].size(); j++) {
             /* if(equals(testp, grid_pruned[branch_closest_grid_points[index][j]])) { */
             /*     std::cout<< "being removed at branch: " << branch.back() << std::endl; */
@@ -251,7 +254,7 @@ namespace cartocrow::medial_axis {
             double minWeight = INFINITY;
             int minIndex = -1;
 
-            /* std::cout << "number of branches = " << branches.size() << std::endl; */
+            std::cout << "number of branches = " << branches.size() << std::endl;
             // Find the branch with the minimum weight
             for (int i = 0; i < branches.size(); ++i) {
                 double weight = get_branch_weight(i);
@@ -266,8 +269,8 @@ namespace cartocrow::medial_axis {
             }
             std::cout << "removing branch " << minIndex << " with endpoint " << branches[minIndex][0] << std::endl;
             remove_branch(minIndex);
-            /* std::cout << "graph size = " << graph.size() << std::endl; */
-            /* std::cout << std::endl; */
+            std::cout << "graph size = " << graph.size() << std::endl;
+            std::cout << std::endl;
             compute_branches();
             compute_grid_closest_branches();
             centroid_area_lost[branches[minIndex].back()] += minWeight;
@@ -300,7 +303,6 @@ namespace cartocrow::medial_axis {
     void MedialAxis::compute_grid_closest_branches() {
         grid_closest_branches.clear();
         branch_closest_grid_points.clear();
-        /* Point<Inexact> testp(219.52, 233.97); */
         // Make sure points inside radius of one of the inner points 
         // are not counted for any branch
         for (int p = 0; p < grid_pruned.size(); p++) {
@@ -391,6 +393,7 @@ namespace cartocrow::medial_axis {
                 Point<Inexact> t = halfedge->vertex()->point();
                 Point<Inexact> s = halfedge->opposite()->vertex()->point();
                 add_edge(s, t);
+                
             }
         }
     }

@@ -52,9 +52,9 @@ StenomapDemo::StenomapDemo() {
     setWindowTitle("CartoCrow – Stenomap demo");
     std::filesystem::path ipePath = "/home/diego/src/cartocrow/data/europe.ipe";
 	RegionMap map = ipeToRegionMap(ipePath);
-    for (const auto a : map) {
-        std::cout << a.first << std::endl;
-    }
+    /* for (const auto a : map) { */
+    /*     std::cout << a.first << std::endl; */
+    /* } */
     CGAL::Polyline_simplification_2::Squared_distance_cost cost;
     CGAL::Polyline_simplification_2::Stop_below_count_ratio_threshold stop(0.1);
     Polygon<Inexact> pgon;
