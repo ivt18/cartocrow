@@ -3,10 +3,18 @@
 
 #include "../core/core.h"
 #include <CGAL/create_straight_skeleton_2.h>
+#include <CGAL/Polygon_2.h>
+#include <CGAL/Boolean_set_operations_2.h>
+#include <CGAL/Polygon_with_holes_2.h>
+
+
 
 // TODO: properly define all of this
 namespace cartocrow::medial_axis {
 typedef CGAL::Straight_skeleton_2<Inexact> Ss;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef K::Point_2 Point_Inexact;
+typedef CGAL::Polygon_2<K> Polygon_2;
 typedef boost::shared_ptr<Ss> SsPtr;
 
 
@@ -59,6 +67,7 @@ class MedialAxis {
   public:
 	Polygon<Inexact> polygon;
 	RadiusList<Inexact> radius_list;
+	int detail_level;
 	
 
 	// Constructs a new medial axis given single polygon
@@ -97,7 +106,11 @@ class MedialAxis {
     void apply_modified_negative_offset(double constant_offset, double min_radius);
     Point<Inexact> interpolate(const Point<Inexact>& start, const Point<Inexact>& end, double ratio);
 
+	Polygon_2 approximate_circle(const Point_Inexact& center, double radius, int n_sides);
 
+	void store_points_on_medial_axis();
+	std::vector<Point<Inexact>> points_on_medial_axis;
+	void compute_negatively_offset_polygon();
 	std::vector<Point<Inexact>> get_points_not_in_branch(int i);
 
     // Getters
