@@ -208,9 +208,6 @@ namespace cartocrow::medial_axis {
         }
 
         for (int j = 0; j < branch_closest_grid_points[index].size(); j++) {
-            /* if(equals(testp, grid_pruned[branch_closest_grid_points[index][j]])) { */
-            /*     std::cout<< "being removed at branch: " << branch.back() << std::endl; */
-            /* } */
             // since indices go in decreasing order we can simply call erase without worrying
             // about the indices shifting down
             grid_pruned.erase(grid_pruned.begin() + branch_closest_grid_points[index][j]);
@@ -311,10 +308,6 @@ namespace cartocrow::medial_axis {
                 rad_sqr_distance = CGAL::squared_distance(grid_pruned[p], branches[j].back());
                 if (rad_sqr_distance <= radius_list[branches[j].back()]) {
                     grid_closest_branches[p] = -1;
-                    /* if(equals(grid_pruned[p], testp)) { */
-                    /*     std::cout << "Going to inner branch: " << branches[j].back(); */
-                    /*     std::cout << "  ===  radius: " << rad_sqr_distance << std::endl; */
-                    /* } */
                 }
             }
         }
@@ -329,14 +322,6 @@ namespace cartocrow::medial_axis {
                     if (cur_sqr_distance < min_sqr_distance && grid_closest_branches[p] != -1) {
                         min_sqr_distance = cur_sqr_distance;
                         grid_closest_branches[p] = j;
-                        /* if(equals(grid_pruned[p], testp) && equals(branches[j].back(), Point<Inexact> (225.034, 241.82)) ) { */
-                        /*     std::cout << "dist(grid_pruned[p],cur_segment)= " << CGAL::squared_distance(grid_pruned[p], cur_segment) << std::endl; */
-                        /*     std::cout << "but grid_pruned[p]= " << grid_pruned[p] << " and cur_segemtn= " << cur_segment << std::endl; */
-                        /* } else if(equals(grid_pruned[p], testp)) { */
-                        /*     std::cout << "Going to branch: " << branches[j].back(); */
-                        /*     std::cout << " | | dist: " << min_sqr_distance << std::endl; */
-                        /*     std::cout << "------------------------------" << std::endl; */
-                        /* } */
                     }
                 }
             }
@@ -344,10 +329,6 @@ namespace cartocrow::medial_axis {
             for (int j = 0; j < noBranchSegments.size(); j++) {
                 cur_sqr_distance = CGAL::squared_distance(grid_pruned[p], noBranchSegments[j]);
                 if (cur_sqr_distance < min_sqr_distance && grid_closest_branches[p] != -1) {
-                    /* if ( equals(testp, grid_pruned[p]) ) { */
-                    /*     std::cout << "going to no branch segment: " << noBranchSegments[j] << std::endl; */
-                    /*     std::cout << "from branch: " << branches[grid_closest_branches[p]][0] << std::endl; */
-                    /* } */
                     grid_closest_branches[p] = -1;
                 }
             }
