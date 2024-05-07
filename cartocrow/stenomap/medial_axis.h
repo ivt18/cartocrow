@@ -68,7 +68,8 @@ class MedialAxis {
 	Polygon<Inexact> polygon;
 	RadiusList<Inexact> radius_list;
 	int detail_level;
-	
+    PolygonSet<Inexact> region;
+	std::vector<Polygon_2> circle_polygons;
 
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
@@ -82,6 +83,7 @@ class MedialAxis {
 	void print_adjacency_list();
 	// Calculates the weight function for each point
 	void calculate_weight_function();
+	void compute_radius();
 	// Compute branches
 	void compute_branches();
 	// Get weight of branch

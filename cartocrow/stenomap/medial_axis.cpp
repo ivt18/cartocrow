@@ -30,6 +30,21 @@ namespace cartocrow::medial_axis {
         }
     }
 
+    void MedialAxis::compute_radius() {
+        radius_list.clear();
+        for (const auto& cur_point: points_on_medial_axis) {
+            double radius = INFINITY;
+            Segment<Inexact> segment;
+            Segment<Inexact> segment2;
+            for (auto edgeIt = polygon.edges_begin(); edgeIt != polygon.edges_end(); ++edgeIt) {
+                Segment<Inexact> edge = *edgeIt;
+                Inexact::FT dist = CGAL::squared_distance(cur_point, edge);
+                if (dist < radius) radius = dist;
+            }
+            radius_list.insert(std::make_pair(cur_point, radius));
+        }
+    }
+
     void MedialAxis::compute_centroid_neighborhoods() {
         for (const auto& row : grid) {
             for (const auto& point : row) {
@@ -391,120 +406,131 @@ Point<Inexact> MedialAxis::interpolate(const Point<Inexact>& start, const Point<
 
 
 void MedialAxis::apply_modified_negative_offset(double constant_offset, double min_radius) {
-    // iterate through each vertex-radius pair in the radius_list.
-    for (auto& vertex_radius_pair : radius_list) {
-        // reduce the radius by the constant offset.
-        std :: cout << "Applying modified negative offset..." << std::endl;
-        double new_radius = vertex_radius_pair.second - constant_offset;
-        
-        // ensure the new radius does not fall under the min threshold.
-        // if it does, set it to the mini theshold.
-        if (new_radius < min_radius) {
-            new_radius = min_radius;
-        }
-        // print old vs new radious
-        //std::cout << "Old radius: " << vertex_radius_pair.second << " New radius: " << new_radius << std::endl;
-        vertex_radius_pair.second = new_radius;
-    }
+	compute_radius();
+	// iterate through each vertex-radius pair in the radius_list.
+	for (auto& vertex_radius_pair : radius_list) {
+		// reduce the radius by the constant offset.
+		//std :: cout << "Applying modified negative offset..." << std::endl;
+		double new_radius = vertex_radius_pair.second - constant_offset;
+
+		// ensure the new radius does not fall under the min threshold.
+		// if it does, set it to the mini theshold.
+		if (new_radius < min_radius) {
+			new_radius = min_radius;
+			//new_radius = 0;
+		}
+		// print old vs new radious
+		//std::cout << "Old radius: " << vertex_radius_pair.second << " New radius: " << new_radius << std::endl;
+		vertex_radius_pair.second = new_radius;
+		//std::cout << new_radius << std::endl;
+	}
+	//std::cout << "a" << std::endl;
+	compute_negatively_offset_polygon();
 }
 
 void MedialAxis::store_points_on_medial_axis() {
-    double threshold = 1e-3; // make this smaller maybe ;1e-5 is too small
-    points_on_medial_axis.clear(); 
+	double threshold = 1e-1; // make this smaller maybe ;1e-5 is too small
+	points_on_medial_axis.clear(); 
 
-    for (const auto& point : grid_pruned) {
-        bool isOnMedialAxis = false;
+	for (const auto& branch : branches) {
+	    for (size_t i = 0; i < branch.size() - 1; ++i) {
+	        Point<Inexact> start = branch[i];
+	        Point<Inexact> end = branch[i + 1];
+		points_on_medial_axis.push_back(start);
+		points_on_medial_axis.push_back(end);
+		for (double i = 1; i < 50; i++) {
+                    Point<Inexact> new_point = interpolate(start, end, i / 50.0);
+		    points_on_medial_axis.push_back(new_point);
+		}
+	    }
+	}
+	/* for (const auto& point : grid_pruned) { */
+	/* 	bool isOnMedialAxis = false; */
 
-        for (const auto& branch : branches) {
-            for (size_t i = 0; i < branch.size() - 1; ++i) {
-                Point<Inexact> start = branch[i];
-                Point<Inexact> end = branch[i + 1];
+	/* 	for (const auto& branch : branches) { */
+	/* 	    for (size_t i = 0; i < branch.size() - 1; ++i) { */
+	/* 	        Point<Inexact> start = branch[i]; */
+	/* 	        Point<Inexact> end = branch[i + 1]; */
 
-                Segment<Inexact> segment(start, end);
-                auto dist = CGAL::squared_distance(point, segment);
-                if (dist <= threshold) {
-                    isOnMedialAxis = true;
-                    break; // No need to check other segments for this point
-                }
-            }
-            if (isOnMedialAxis) {
-                break; // No need to check other branches for this point
-            }
-        }
+	/* 	        Segment<Inexact> segment(start, end); */
+	/* 	        auto dist = CGAL::squared_distance(point, segment); */
+	/* 	        if (dist <= threshold) { */
+	/* 	            isOnMedialAxis = true; */
+	/* 	            break; // No need to check other segments for this point */
+	/* 	        } */
+	/* 	    } */
+	/* 	    if (isOnMedialAxis) { */
+	/* 	        break; // No need to check other branches for this point */
+	/* 	    } */
+	/* 	} */
 
-        if (isOnMedialAxis) {
-            std::cout<<"Point"<<" "<<point<<std::endl;
-            points_on_medial_axis.push_back(point);
-        }
-    }
+	/* 	if (isOnMedialAxis) { */
+	/* 		std::cout<<"Point"<<" "<<point<<std::endl; */
+	/* 		points_on_medial_axis.push_back(point); */
+	/* 	} */
+	/* } */
 }
 
 Polygon_2 MedialAxis::approximate_circle(const Point_Inexact& center, double radius, int n_sides) {
-    Polygon_2 poly;
-    const double pi = 3.14159265358979323846;
-    for (int i = 0; i < n_sides; ++i) {
-        double angle = 2 * pi * i / n_sides;
-        poly.push_back(Point_Inexact(center.x() + radius * std::cos(angle), center.y() + radius * std::sin(angle)));
-    }
-    return poly;
+	Polygon_2 poly;
+	for (int i = 0; i < n_sides; ++i) {
+		double angle = 2 * std::numbers::pi * i / n_sides;
+		poly.push_back(Point_Inexact(center.x() + radius * std::cos(angle), center.y() + radius * std::sin(angle)));
+	}
+	return poly;
 }
 
 void MedialAxis::compute_negatively_offset_polygon() {
-    std::vector<Polygon_2> circle_polygons;
-    // Generate approximated circle polygons for each point with the modified radius
-    for (const auto& vertex_radius_pair : radius_list) {
-        Polygon_2 poly = approximate_circle(vertex_radius_pair.first, std::sqrt(vertex_radius_pair.second), detail_level);
-        circle_polygons.push_back(poly);
-    }
+	// Generate approximated circle polygons for each point with the modified radius
+	for (const auto& vertex_radius_pair : radius_list) {
+		Polygon_2 poly = approximate_circle(vertex_radius_pair.first, std::sqrt(vertex_radius_pair.second), 20);
+		circle_polygons.push_back(poly);
+	}
 
-    // Compute the union of all circle polygons to form the negatively offset polygon P'
-    // CGAL::Polygon_with_holes_2<CGAL::Exact_predicates_inexact_constructions_kernel> p_prime, temp_union;
-    // bool first = true;
-    // for (const Polygon_2& poly : circle_polygons) {
-    //     if (first) {
-    //         p_prime = poly; // Initialize P' with the first polygon
-    //         first = false;
-    //     } else {
-    //         CGAL::join(p_prime, poly, temp_union); // Merge into temp_union
-    //         p_prime = std::move(temp_union);
-    //     }
-    // }
-   CGAL::Polygon_set_2<CGAL::Exact_predicates_inexact_constructions_kernel> polygonSet;
+	// Compute the union of all circle polygons to form the negatively offset polygon P'
+	// CGAL::Polygon_with_holes_2<CGAL::Exact_predicates_inexact_constructions_kernel> p_prime, temp_union;
+	// bool first = true;
+	// for (const Polygon_2& poly : circle_polygons) {
+	//     if (first) {
+	//         p_prime = poly; // Initialize P' with the first polygon
+	//         first = false;
+	//     } else {
+	//         CGAL::join(p_prime, poly, temp_union); // Merge into temp_union
+	//         p_prime = std::move(temp_union);
+	//     }
+	// }
 
-    // Insert all circle polygons into the polygon set
-    for (const auto& poly : circle_polygons) {
-        polygonSet.join(poly);
-    }
-    std::list<CGAL::Polygon_with_holes_2<CGAL::Exact_predicates_inexact_constructions_kernel>> result;
-    polygonSet.polygons_with_holes(std::back_inserter(result));
-    if (!result.empty()) {
-        const auto& p_prime = result.front(); // Example of accessing the first result
-        // Do something with p_prime, e.g., store it or further process it
-    }
+	//PolygonSet<Inexact> polygonSet;
 
+/* 	// Insert all circle polygons into the polygon set */
+	for (const auto& poly : circle_polygons) {
+		region.join(poly);
+		//CGAL::join(poly, region, region);
+	}
+	//polygonSet.polygons_with_holes(region);
 }
 
-    MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
-        assert(shape.is_counterclockwise_oriented());
-        polygon = shape;
-        // create interior straight skeleton
-        // TODO: maybe make a separate function to just compute this skeleton,
-        // and call it in the constructor
-        // TODO: maybe even put this under the Polygon class?
-        iss = CGAL::create_interior_straight_skeleton_2(shape);
-        if (!iss) {
-            std::cout << "Failed creating interior straight skeleton." << std::endl;
-            exit(1);
-        }
-        std::cout << "Successfully computed interior straight skeleton." << std::endl;
+MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
+	assert(shape.is_counterclockwise_oriented());
+	polygon = shape;
+	// create interior straight skeleton
+	// TODO: maybe make a separate function to just compute this skeleton,
+	// and call it in the constructor
+	// TODO: maybe even put this under the Polygon class?
+	iss = CGAL::create_interior_straight_skeleton_2(shape);
+	if (!iss) {
+		std::cout << "Failed creating interior straight skeleton." << std::endl;
+		exit(1);
+	}
+	std::cout << "Successfully computed interior straight skeleton." << std::endl;
 
-        for (auto halfedge = iss->halfedges_begin(); halfedge != iss->halfedges_end(); halfedge++) {
-            if (halfedge->is_bisector()) {
-                Point<Inexact> t = halfedge->vertex()->point();
-                Point<Inexact> s = halfedge->opposite()->vertex()->point();
-                add_edge(s, t);
-            }
-        }
-    }
+	for (auto halfedge = iss->halfedges_begin(); halfedge != iss->halfedges_end(); halfedge++) {
+		if (halfedge->is_bisector()) {
+			Point<Inexact> t = halfedge->vertex()->point();
+			Point<Inexact> s = halfedge->opposite()->vertex()->point();
+			add_edge(s, t);
+		}
+	}
+}
 
 } // namespace cartocrow::medial_axis

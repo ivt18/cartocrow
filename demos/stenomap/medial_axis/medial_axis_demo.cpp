@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "medial_axis_demo.h"
 #include "polygon_painting.h"
+#include "polygon_set_painting.h"
 #include "medial_axis_painting.h"
 #include "pruned_medial_axis_painting.h"
 #include "grid_painting.h"
@@ -58,7 +59,7 @@ StenomapDemo::StenomapDemo() {
     m_polygons.push_back(polygon);
 
     MedialAxis medial_axis(polygon);
-    medial_axis.compute_grid(500, 500);
+    medial_axis.compute_grid(100, 100);
     medial_axis.prune_grid();
     medial_axis.calculate_weight_function();
     medial_axis.compute_centroid_neighborhoods();
@@ -72,7 +73,8 @@ StenomapDemo::StenomapDemo() {
     medial_axis.apply_modified_negative_offset(0.5, 0.1);
     // medial_axis.prune_points(0.25);
     medial_axis.store_points_on_medial_axis();
-    
+
+    medial_axis.apply_modified_negative_offset(0.1, 0.01);
 
     // setup renderer
     m_renderer = new GeometryWidget();
@@ -82,15 +84,15 @@ StenomapDemo::StenomapDemo() {
 
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-            recalculate(medial_axis, old);
+            recalculate(medial_axis, old, medial_axis.region);
             });
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
-    recalculate(medial_axis, old);
+    recalculate(medial_axis, old, medial_axis.region);
 }
 
-void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old) {
+void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old, PolygonSet<Inexact> res) {
     for (const Polygon<Inexact>& p : m_polygons) {
         // Draw polygon
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
@@ -102,6 +104,8 @@ void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis ol
         m_renderer->addPainting(std::make_shared<GridPainting>(medial_axis), "Grid");
         // Draw pruned grid
         m_renderer->addPainting(std::make_shared<PrunedGridPainting>(medial_axis), "Pruned grid");
+        // Draw new region
+        m_renderer->addPainting(std::make_shared<PolygonSetPainting>(res), "Simplified polygon region");
     }
 }
 

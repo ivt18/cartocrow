@@ -41,7 +41,7 @@ class StenomapDemo : public QMainWindow {
 	StenomapDemo();
 
   private:
-	void recalculate(const medial_axis::MedialAxis medial_axis, const medial_axis::MedialAxis old);
+	void recalculate(const medial_axis::MedialAxis medial_axis, const medial_axis::MedialAxis old, PolygonSet<Inexact> res);
 
   std::vector<Polygon<Inexact>> m_polygons;
 
