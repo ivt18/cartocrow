@@ -36,44 +36,88 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/geometry_renderer.h"
 
+#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/core/region_map.h"
+#include <ipedoc.h>
+#include <ipepath.h>
+
+#include <CGAL/Polyline_simplification_2/simplify.h>
+#include <CGAL/Polyline_simplification_2/Squared_distance_cost.h>
+
 using namespace cartocrow;
 using namespace cartocrow::renderer;
 using namespace cartocrow::medial_axis;
 
 StenomapDemo::StenomapDemo() {
     setWindowTitle("CartoCrow – Stenomap demo");
+    std::filesystem::path ipePath = "/home/diego/src/cartocrow/data/europe.ipe";
+	RegionMap map = ipeToRegionMap(ipePath);
+    /* for (const auto a : map) { */
+    /*     std::cout << a.first << std::endl; */
+    /* } */
+    CGAL::Polyline_simplification_2::Squared_distance_cost cost;
+    CGAL::Polyline_simplification_2::Stop_below_count_ratio_threshold stop(0.1);
+    Polygon<Inexact> pgon;
+    PolygonSet<Exact> polygonSet;
+	std::vector<PolygonWithHoles<Exact>> polygons;
 
-    // Make simple polygon
-    Polygon<Inexact> polygon;
+    polygonSet = map["ESP"].shape;
+    polygons.clear();
+	polygonSet.polygons_with_holes(std::back_inserter(polygons));
+    double maxArea = 0;
+    // To get mainland Spain we get the biggest polygon from the set (instead of some random island)
+	for (const PolygonWithHoles<Exact> p : polygons) {
+        if (approximate(p.outer_boundary()).area() > maxArea) {
+            pgon = approximate(p.outer_boundary());
+            maxArea = pgon.area();
+        }
+	}
 
-    polygon.push_back( Point<Inexact>(-1,-1) ) ;
+    // Simplifying polygon
+    pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
+    m_polygons.push_back(pgon);
+
+    polygonSet = map["FRA"].shape;
+	polygons.clear();
+	polygonSet.polygons_with_holes(std::back_inserter(polygons));
+    maxArea = 0;
+    // To get mainland France we get the biggest polygon from the set
+	for (const PolygonWithHoles<Exact> p : polygons) {
+        if (approximate(p.outer_boundary()).area() > maxArea) {
+            pgon = approximate(p.outer_boundary());
+            maxArea = pgon.area();
+        }
+	}
+    // Simplifying polygon
+    CGAL::Polyline_simplification_2::Stop_below_count_ratio_threshold stop2(0.5);
+    pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
+    m_polygons.push_back(pgon);
+
+    /* Polygon<Inexact> polygon; */
+    /* // Make simple polygon */
+    /* polygon.push_back( Point<Inexact>(-1,-1) ) ; */
     /* polygon.push_back( Point<Inexact>(-4,-22) ) ; */
-    polygon.push_back( Point<Inexact>(0,-22) ) ;
-    polygon.push_back( Point<Inexact>(1,-1) ) ;
-    polygon.push_back( Point<Inexact>(32,0) ) ;
+    /* polygon.push_back( Point<Inexact>(0,-22) ) ; */
+    /* polygon.push_back( Point<Inexact>(1,-1) ) ; */
+    /* polygon.push_back( Point<Inexact>(32,0) ) ; */
     /* polygon.push_back( Point<Inexact>(32,20) ) ; */
-    polygon.push_back( Point<Inexact>(1,1) ) ;
-    polygon.push_back( Point<Inexact>(0,42) ) ;
-    polygon.push_back( Point<Inexact>(-1,1) ) ;
-    polygon.push_back( Point<Inexact>(-12,0) ) ;
+    /* polygon.push_back( Point<Inexact>(1,1) ) ; */
+    /* polygon.push_back( Point<Inexact>(0,42) ) ; */
+    /* polygon.push_back( Point<Inexact>(-1,1) ) ; */
+    /* polygon.push_back( Point<Inexact>(-12,0) ) ; */
+    /* m_polygons.push_back(polygon); */
 
-    m_polygons.push_back(polygon);
+    for (Polygon<Inexact> polygon : m_polygons) {
+        MedialAxis medial_axis(polygon);
 
-    MedialAxis medial_axis(polygon);
-    medial_axis.compute_grid(100, 100);
-    medial_axis.prune_grid();
-    medial_axis.compute_voronoi_diagram();
-    
-    // medial_axis.calculate_weight_function();
-    // medial_axis.compute_centroid_neighborhoods();
-    // medial_axis.compute_centroid_closest_points();
-    /* medial_axis.compute_branches(); */
-    /* medial_axis.compute_grid_closest_branches(); */
+        medial_axis.compute_grid(50, 50);
+        medial_axis.prune_grid();
+        medial_axis.compute_branches();
 
-    MedialAxis old = medial_axis;
-    // medial_axis.prune_points(0.25);
-    
-
+        m_medialAxisOld.push_back(medial_axis);
+        medial_axis.prune_points(0.015);
+        m_medialAxis.push_back(medial_axis);
+    }
     // setup renderer
     m_renderer = new GeometryWidget();
     m_renderer->setMaxZoom(1000);
@@ -82,26 +126,27 @@ StenomapDemo::StenomapDemo() {
 
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-            recalculate(medial_axis, old);
-            });
+        recalculate();
+    });
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
-    recalculate(medial_axis, old);
+    recalculate();
 }
 
-void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old) {
-    for (const Polygon<Inexact>& p : m_polygons) {
+void StenomapDemo::recalculate() {
+    for (int i = 0; i < m_polygons.size(); i++) {
+        std::string index = std::to_string(i);
         // Draw polygon
-        m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
+        m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(m_polygons[i])), "Polygon " + index);
         // Draw medial axis
-        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(old), "Medial Axis");
+        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(m_medialAxisOld[i]), "Medial Axis" + index);
         // Draw pruned medial axis
-        m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(medial_axis), "Pruned medial Axis");
+        m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(m_medialAxis[i]), "Pruned medial Axis" + index);
         // Draw grid
-        m_renderer->addPainting(std::make_shared<GridPainting>(medial_axis), "Grid");
+        m_renderer->addPainting(std::make_shared<GridPainting>(m_medialAxis[i]), "Grid" + index);
         // Draw pruned grid
-        m_renderer->addPainting(std::make_shared<PrunedGridPainting>(medial_axis), "Pruned grid");
+        m_renderer->addPainting(std::make_shared<PrunedGridPainting>(m_medialAxis[i]), "Pruned grid" + index);
     }
 }
 
