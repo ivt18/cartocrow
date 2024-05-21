@@ -6,17 +6,21 @@
 
 namespace cartocrow::medial_axis {
 
+    MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
+        assert(shape.is_counterclockwise_oriented());
+        polygon = shape;
+
+        // compute the medial axis
+        compute_voronoi_diagram();
+        filter_voronoi_diagram_to_medial_axis();
+    }
+
     bool equals(Point<Inexact> p, Point<Inexact> t) {
         return (CGAL::squared_distance(p,t) < 0.01);
     }
 
-    void MedialAxis::add_vertex(const Point<Inexact>& s) {
-        graph[s];
-        centroid_area_lost[s];
-    }
-
     void MedialAxis::calculate_weight_function() {
-        for (const auto& vertex: graph) {
+        for (const auto& vertex: medial_axis_graph) {
             const Point<Inexact>& current_point = vertex.first;
             double radius = INFINITY;
             Segment<Inexact> segment;
@@ -34,7 +38,7 @@ namespace cartocrow::medial_axis {
     void MedialAxis::compute_centroid_neighborhoods() {
         for (const auto& row : grid) {
             for (const auto& point : row) {
-                for (const auto& vertex: graph) {
+                for (const auto& vertex: medial_axis_graph) {
                     const Point<Inexact>& current_point = vertex.first;
                     centroid_neighborhoods[current_point];
                     double radius = radius_list[current_point];
@@ -52,7 +56,7 @@ namespace cartocrow::medial_axis {
             for (const auto& point : row) {
                 Point<Inexact> closest_centroid;
                 double min_distance = INFINITY;
-                for (const auto& vertex: graph) {
+                for (const auto& vertex: medial_axis_graph) {
                     const Point<Inexact>& current_point = vertex.first;
                     centroid_closest_points[current_point];
                     double distance = CGAL::squared_distance(current_point, point);
@@ -77,7 +81,12 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    void MedialAxis::remove_vertex(const Point<Inexact>& s) {
+    void MedialAxis::add_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s) {
+        graph[s];
+        centroid_area_lost[s];
+    }
+
+    void MedialAxis::remove_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s) {
         // Remove s from the adjacency lists of its neighbors.
         for (const auto& neighbor : graph[s]) {
             auto& neighborsList = graph[neighbor];
@@ -88,10 +97,10 @@ namespace cartocrow::medial_axis {
         graph.erase(s);
     }
 
-    void MedialAxis::add_edge(const Point<Inexact>& s, const Point<Inexact>& t) {
+    void MedialAxis::add_edge(AdjacencyList<Inexact>& graph, const Point<Inexact>& s, const Point<Inexact>& t) {
         // Add both vertices to the adjacency list
-        add_vertex(s);
-        add_vertex(t);
+        add_vertex(graph, s);
+        add_vertex(graph, t);
 
         // Add the edge to the adjacency list in both directions
         graph[s].push_back(t);
@@ -100,7 +109,7 @@ namespace cartocrow::medial_axis {
 
     void MedialAxis::print_adjacency_list() {
         std::cout << "Printing adjacency list..." << std::endl;
-        for (const auto& pair : graph) {
+        for (const auto& pair : medial_axis_graph) {
             std::cout << "Vertex (" << pair.first << ") adjacency list:\n";
             for (const auto& neighbor : pair.second) {
                 std::cout << "\t(" << neighbor << ")\n";
@@ -119,7 +128,7 @@ namespace cartocrow::medial_axis {
         std::set<Point<Inexact>> endpoints, junctions;
         endpoints.clear();
         junctions.clear();
-        for (const auto& entry : graph) {
+        for (const auto& entry : medial_axis_graph) {
             size_t degree = entry.second.size();
             if (degree == 2) { // Endpoint
                 endpoints.insert(entry.first);
@@ -129,7 +138,7 @@ namespace cartocrow::medial_axis {
         }
 
         // Ensure graph is not empty and has endpoints and junctions
-        if (graph.empty() || endpoints.empty() || junctions.empty()) {
+        if (medial_axis_graph.empty() || endpoints.empty() || junctions.empty()) {
             std::cout << "Graph, endpoints, or junctions are empty." << std::endl;
             return;
         }
@@ -162,7 +171,7 @@ namespace cartocrow::medial_axis {
                     break;
                 }
 
-                for (const auto& adj : graph.at(current)) {
+                for (const auto& adj : medial_axis_graph.at(current)) {
                     if (visited.find(adj) == visited.end()) {
                         queue.push(adj);
                         visited.insert(adj);
@@ -182,7 +191,7 @@ namespace cartocrow::medial_axis {
         }
 
         noBranchSegments.clear();
-        for (const auto& entry : graph) {
+        for (const auto& entry : medial_axis_graph) {
             for (const auto& adj : entry.second) {
                 if (allSegments.find({entry.first, adj}) == allSegments.end()) {
                     noBranchSegments.push_back(Segment<Inexact>(entry.first, adj));
@@ -203,7 +212,7 @@ namespace cartocrow::medial_axis {
         // Due to implementation of compute_branches(), the junction point will be the last point 
         // in the branch vector, which we should not remove when removing the branch
         for (int i = 0; i < branch.size() - 1; ++i) {
-            remove_vertex(branch[i]);
+            remove_vertex(medial_axis_graph, branch[i]);
         }
 
         for (int j = 0; j < branch_closest_grid_points[index].size(); j++) {
@@ -216,7 +225,7 @@ namespace cartocrow::medial_axis {
      std::vector<Point<Inexact>> MedialAxis::get_points_not_in_branch(int i) {
         Branch<Inexact> branch = branches[i];
         std::vector<Point<Inexact>> points_not_in_branch;
-        for (const auto& point: graph) {
+        for (const auto& point: medial_axis_graph) {
             Point<Inexact> cur = point.first;
             for (int j = 0; j < branch.size() - 1; j++) {
                 if (cur == branch[j]) {
@@ -263,19 +272,11 @@ namespace cartocrow::medial_axis {
                 std::cout << "Pruning finished" << std::endl;
                 return;
             }
-            std::cout << "removing branch " << minIndex << " with endpoint " << branches[minIndex][0] << std::endl;
             remove_branch(minIndex);
-            std::cout << "graph size = " << graph.size() << std::endl;
-            std::cout << std::endl;
             compute_branches();
             compute_grid_closest_branches();
             centroid_area_lost[branches[minIndex].back()] += minWeight;
             removedArea += minWeight;
-            std::cout << "total " << grid_size << std::endl;
-            std::cout << "removed " << removedArea << std::endl;
-            std::cout << "remaining branches: " << branches.size() << std::endl;
-            std::cout << std::endl;
-            std::cout << std::endl;
         }
     }
 
@@ -352,15 +353,6 @@ namespace cartocrow::medial_axis {
             }
             std::cout << std::endl;
         }
-    }
-
-    MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
-        assert(shape.is_counterclockwise_oriented());
-        polygon = shape;
-
-        // compute the medial axis
-        compute_voronoi_diagram();
-        filter_voronoi_diagram_to_medial_axis();
     }
 
     void MedialAxis::compute_voronoi_diagram() {
@@ -463,8 +455,28 @@ namespace cartocrow::medial_axis {
                 continue;
 
             // add the edge and points to the data
-            add_edge(p->point(), q->point());
+            add_edge(medial_axis_graph, p->point(), q->point());
         }
     }
+	
+  void MedialAxis::compute_visibility_graph(std::list<Point<Inexact>> feature_points) {
+    for(auto p : feature_points) {
+      for (auto q : feature_points) {
+        if (p == q) continue;
+        bool visible = true;
+        Segment<Inexact> seg(p,q);
+        for (auto edgeIt = polygon.edges_begin(); edgeIt != polygon.edges_end(); ++edgeIt) {
+          Segment<Inexact> edge = *edgeIt;
+          if (CGAL::do_intersect(seg, edge)) {
+            visible = false;
+            break;
+          }
+        }
+        if (visible) {
+          add_edge(visibility_graph, p, q);
+        }
+      }
+    }
+  }
 
 } // namespace cartocrow::medial_axis

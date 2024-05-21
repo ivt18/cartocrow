@@ -33,7 +33,10 @@ template <typename K> using VertexHandle = VoronoiDiagram<K>::Vertex_handle;
 class MedialAxis {
   private:
 	// adjacency list
-    AdjacencyList<Inexact> graph;
+  AdjacencyList<Inexact> medial_axis_graph;
+  
+  // Visibility graph
+  AdjacencyList<Inexact> visibility_graph;
 	
 	// map between centroid and points in its radius
 	AdjacencyList<Inexact> centroid_neighborhoods;
@@ -76,11 +79,11 @@ class MedialAxis {
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
 	// Adds vertex to the adjacency list
-	void add_vertex(const Point<Inexact>& s);
+	void add_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s);
 	// Removes vertex from the adjacency list
-	void remove_vertex(const Point<Inexact>& s);
+	void remove_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s);
 	// Adds edge to the adjacency list
-	void add_edge(const Point<Inexact>& s, const Point<Inexact>& t);
+	void add_edge(AdjacencyList<Inexact>& graph, const Point<Inexact>& s, const Point<Inexact>& t);
 	// Prints the adjacency list
 	void print_adjacency_list();
 	// Calculates the weight function for each point
@@ -105,6 +108,8 @@ class MedialAxis {
 
 	void prune_grid();
 
+  void compute_visibility_graph(std::list<Point<Inexact>> feature_points);
+
 	std::vector<Point<Inexact>> get_points_not_in_branch(int i);
 
     void compute_voronoi_diagram();
@@ -114,7 +119,7 @@ class MedialAxis {
 
     // Getters
     AdjacencyList<Inexact> get_graph() const {
-        return graph;
+        return medial_axis_graph;
     }
     Grid<Inexact> get_grid() const {
         return grid;
