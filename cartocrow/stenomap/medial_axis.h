@@ -2,8 +2,6 @@
 #define CARTOCROW_STENOMAP_MEDIAL_AXIS_H
 
 #include "../core/core.h"
-#include <CGAL/create_straight_skeleton_2.h>
-/* TODO: change this to use segment voronoi diagrams */
 #include <CGAL/Segment_Delaunay_graph_2.h>
 #include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
 #include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
@@ -12,8 +10,6 @@
 
 // TODO: properly define all of this
 namespace cartocrow::medial_axis {
-typedef CGAL::Straight_skeleton_2<Inexact> Ss;
-typedef boost::shared_ptr<Ss> SsPtr;
 
 template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
 template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
@@ -33,19 +29,10 @@ template <typename K> using AP = CGAL::Segment_Delaunay_graph_degeneracy_removal
 template <typename K> using VoronoiDiagram = CGAL::Voronoi_diagram_2<SDG2<K>, AT<K>, AP<K>>;
 template <typename K> using Site_2 = AT<K>::Site_2;
 template <typename K> using VertexHandle = VoronoiDiagram<K>::Vertex_handle;
-// template <typename K> using Site_2 = AdaptationTraits<K>::Site_2;
-
-struct MedialAxisData {
-    std::set<Point<Inexact>> points;
-    std::set<std::pair<Point<Inexact>, Point<Inexact>>> edges; // (src, dst)
-};
 
 class MedialAxis {
   private:
-	// pointer to interior straight skeleton
-	SsPtr iss;
 	// adjacency list
-
     AdjacencyList<Inexact> graph;
 	
 	// map between centroid and points in its radius
@@ -122,7 +109,7 @@ class MedialAxis {
     void compute_voronoi_diagram();
     std::set<VertexHandle<Inexact>> identify_vertices_inside_polygon();
     std::set<Point<Inexact>> identify_concave_vertices_polygon();
-    MedialAxisData filter_voronoi_diagram_to_medial_axis();
+    void filter_voronoi_diagram_to_medial_axis();
 
     // Getters
     AdjacencyList<Inexact> get_graph() const {

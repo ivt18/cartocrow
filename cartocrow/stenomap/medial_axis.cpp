@@ -311,24 +311,10 @@ namespace cartocrow::medial_axis {
     MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
         assert(shape.is_counter_clockwise_oriented());
         polygon = shape;
-        // create interior straight skeleton
-        // TODO: maybe make a separate function to just compute this skeleton,
-        // and call it in the constructor
-        // TODO: maybe even put this under the Polygon class?
-        iss = CGAL::create_interior_straight_skeleton_2(shape);
-        if (!iss) {
-            std::cout << "Failed creating interior straight skeleton." << std::endl;
-            exit(1);
-        }
-        std::cout << "Successfully computed interior straight skeleton." << std::endl;
 
-        for (auto halfedge = iss->halfedges_begin(); halfedge != iss->halfedges_end(); halfedge++) {
-            if (halfedge->is_bisector()) {
-                Point<Inexact> t = halfedge->vertex()->point();
-                Point<Inexact> s = halfedge->opposite()->vertex()->point();
-                add_edge(s, t);
-            }
-        }
+        // compute the medial axis
+        compute_voronoi_diagram();
+        filter_voronoi_diagram_to_medial_axis();
     }
 
     void MedialAxis::compute_voronoi_diagram() {
@@ -336,9 +322,6 @@ namespace cartocrow::medial_axis {
 
         // Add polygon boundary to voronoi diagram
         for (std::size_t i = 0; i < polygon.size(); i++) {
-            /* vd.insert(
-                Site_2<Inexact>(polygon[i], polygon[(i+1) % polygon.size()])
-            ); */
             vd.insert(Site_2<Inexact>::construct_site_2(polygon[i], polygon[(i + 1) % polygon.size()]));
         }
 
@@ -413,9 +396,7 @@ namespace cartocrow::medial_axis {
         return concave;
     }
 
-    MedialAxisData MedialAxis::filter_voronoi_diagram_to_medial_axis() {
-        MedialAxisData ret;
-
+    void MedialAxis::filter_voronoi_diagram_to_medial_axis() {
         auto inside = identify_vertices_inside_polygon();
         auto concave = identify_concave_vertices_polygon();
 
@@ -435,15 +416,9 @@ namespace cartocrow::medial_axis {
             if (concave.contains(p->point()) || concave.contains(q->point()))
                 continue;
 
-            // add the vertices to the data
-            ret.points.insert(p->point());
-            ret.points.insert(q->point());
-            
-            // add the edge to the data
-            ret.edges.emplace(p->point(), q->point());
+            // add the edge and points to the data
+            add_edge(p->point(), q->point());
         }
-        
-        return ret;
     }
 
 } // namespace cartocrow::medial_axis

@@ -70,7 +70,6 @@ StenomapDemo::StenomapDemo() {
     /* medial_axis.compute_branches(); */
     /* medial_axis.compute_grid_closest_branches(); */
 
-    MedialAxisData data = medial_axis.filter_voronoi_diagram_to_medial_axis();
     MedialAxis old = medial_axis;
     // medial_axis.prune_points(0.25);
     
@@ -83,20 +82,20 @@ StenomapDemo::StenomapDemo() {
 
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-            recalculate(medial_axis, old, data);
+            recalculate(medial_axis, old);
             });
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
-    recalculate(medial_axis, old, data);
+    recalculate(medial_axis, old);
 }
 
-void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old, const MedialAxisData data) {
+void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old) {
     for (const Polygon<Inexact>& p : m_polygons) {
         // Draw polygon
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
         // Draw medial axis
-        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(data), "Medial Axis");
+        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(old), "Medial Axis");
         // Draw pruned medial axis
         m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(medial_axis), "Pruned medial Axis");
         // Draw grid
