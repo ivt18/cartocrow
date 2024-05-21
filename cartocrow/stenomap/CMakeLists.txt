@@ -1,8 +1,10 @@
 set(SOURCES
 	medial_axis.cpp
+	backbone.cpp
 )
 set(HEADERS
 	medial_axis.h
+	backbone.h
 )
 
 add_library(stenomap ${SOURCES})

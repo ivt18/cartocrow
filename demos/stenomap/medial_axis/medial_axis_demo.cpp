@@ -39,6 +39,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using namespace cartocrow;
 using namespace cartocrow::renderer;
 using namespace cartocrow::medial_axis;
+using namespace cartocrow::backbone;
 
 StenomapDemo::StenomapDemo() {
     setWindowTitle("CartoCrow – Stenomap demo");
@@ -58,6 +59,8 @@ StenomapDemo::StenomapDemo() {
     m_polygons.push_back(polygon);
 
     MedialAxis medial_axis(polygon);
+    Backbone bbone(polygon);
+
     medial_axis.compute_grid(500, 500);
     medial_axis.prune_grid();
     medial_axis.calculate_weight_function();

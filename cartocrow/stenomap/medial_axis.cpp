@@ -256,6 +256,7 @@ namespace cartocrow::medial_axis {
                 return;
             }
             std::cout << "removing branch " << minIndex << " with endpoint " << branches[minIndex][0] << std::endl;
+            centroid_area_lost[branches[minIndex].back()] += minWeight;
             remove_branch(minIndex);
             /* std::cout << "graph size = " << graph.size() << std::endl; */
             std::cout << std::endl;
@@ -263,7 +264,6 @@ namespace cartocrow::medial_axis {
             /* std::cout << std::endl; */
             compute_branches();
             compute_grid_closest_branches();
-            centroid_area_lost[branches[minIndex].back()] += minWeight;
         }
     }
 
@@ -297,7 +297,6 @@ namespace cartocrow::medial_axis {
                     grid_closest_branches[p] = -1;
             }
         }
-        Point<Inexact> testp(0,-12);
         for (int p = 0; p < grid_pruned.size(); p++) {
             double min_sqr_distance = INFINITY;
             double cur_sqr_distance;
@@ -316,10 +315,6 @@ namespace cartocrow::medial_axis {
             for (int j = 0; j < noBranchSegments.size(); j++) {
                 cur_sqr_distance = CGAL::squared_distance(grid_pruned[p], noBranchSegments[j]);
                 if (cur_sqr_distance < min_sqr_distance && grid_closest_branches[p] != -1) {
-                    if (CGAL::squared_distance(grid_pruned[p], testp) < 0.01) {
-                        std::cout << "going to: " << noBranchSegments[j] << std::endl;
-                        std::cout << "from branch: " << branches[grid_closest_branches[p]][0] << std::endl;
-                    }
                     grid_closest_branches[p] = -1;
                 }
             }
@@ -394,7 +389,7 @@ void MedialAxis::apply_modified_negative_offset(double constant_offset, double m
     // iterate through each vertex-radius pair in the radius_list.
     for (auto& vertex_radius_pair : radius_list) {
         // reduce the radius by the constant offset.
-        std :: cout << "Applying modified negative offset..." << std::endl;
+        /* std :: cout << "Applying modified negative offset..." << std::endl; */
         double new_radius = vertex_radius_pair.second - constant_offset;
         
         // ensure the new radius does not fall under the min threshold.
@@ -433,7 +428,7 @@ void MedialAxis::store_points_on_medial_axis() {
         }
 
         if (isOnMedialAxis) {
-            std::cout<<"Point"<<" "<<point<<std::endl;
+            /* std::cout<<"Point"<<" "<<point<<std::endl; */
             points_on_medial_axis.push_back(point);
         }
     }

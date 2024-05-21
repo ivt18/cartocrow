@@ -30,6 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/core/core.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/stenomap/medial_axis.h"
+#include "cartocrow/stenomap/backbone.h"
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
