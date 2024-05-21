@@ -11,6 +11,8 @@ project(cartocrow
     HOMEPAGE_URL "https://github.com/tue-alga/cartocrow"
     LANGUAGES CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
 set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
 set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
@@ -47,6 +49,9 @@ find_path(CGAL_INCLUDE_DIR CGAL/Exact_predicates_inexact_constructions_kernel.h)
 include_directories(${CGAL_INCLUDE_DIR})
 link_libraries(${CGAL_LIBRARIES})
 find_package(GMP REQUIRED)
+
+# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+# set (CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
