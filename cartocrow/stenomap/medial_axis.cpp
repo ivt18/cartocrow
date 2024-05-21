@@ -1,9 +1,8 @@
 #include "medial_axis.h"
 #include "../core/core.h"
-#include <CGAL/CORE/ExprRep.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Boolean_set_operations_2.h>
 #include <cmath>
-#include <unordered_map>
 
 namespace cartocrow::medial_axis {
 
@@ -358,24 +357,113 @@ namespace cartocrow::medial_axis {
     MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
         assert(shape.is_counterclockwise_oriented());
         polygon = shape;
-        // create interior straight skeleton
-        // TODO: maybe make a separate function to just compute this skeleton,
-        // and call it in the constructor
-        // TODO: maybe even put this under the Polygon class?
-        iss = CGAL::create_interior_straight_skeleton_2(shape);
-        if (!iss) {
-            std::cout << "Failed creating interior straight skeleton." << std::endl;
-            exit(1);
-        }
-        std::cout << "Successfully computed interior straight skeleton." << std::endl;
 
-        for (auto halfedge = iss->halfedges_begin(); halfedge != iss->halfedges_end(); halfedge++) {
-            if (halfedge->is_bisector()) {
-                Point<Inexact> t = halfedge->vertex()->point();
-                Point<Inexact> s = halfedge->opposite()->vertex()->point();
-                add_edge(s, t);
-                
-            }
+        // compute the medial axis
+        compute_voronoi_diagram();
+        filter_voronoi_diagram_to_medial_axis();
+    }
+
+    void MedialAxis::compute_voronoi_diagram() {
+        vd.clear();
+
+        // Add polygon boundary to voronoi diagram
+        for (std::size_t i = 0; i < polygon.size(); i++) {
+            vd.insert(Site_2<Inexact>::construct_site_2(polygon[i], polygon[(i + 1) % polygon.size()]));
+        }
+
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+    }
+
+    bool MedialAxis::vertex_in_polygon(const VertexHandle<Inexact>& vh) {
+        // Make sure we do not check vertices more than once
+        std::set<VertexHandle<Inexact>> considered;
+
+        // Skip vertices which have already been considered, since a vertex may be connected to multiple halfedges
+        if(considered.count(vh) != 0) {
+            return false;
+        }
+        // Ensure we don't look at a vertex twice
+        considered.insert(vh);
+
+        // Determine if the vertex is inside the polygon
+        const auto orientation = CGAL::oriented_side(vh->point(), polygon);
+        bool inside_of_polygon = orientation == CGAL::ON_ORIENTED_BOUNDARY || orientation == CGAL::POSITIVE;
+
+        // If the vertex was inside the polygon make a note of it
+        if(inside_of_polygon) {
+            return true;
+        }
+
+        return false;
+    }
+
+    std::set<VertexHandle<Inexact>> MedialAxis::identify_vertices_inside_polygon() {
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+        // Keep track of vertices inside polygon
+        std::set<VertexHandle<Inexact>> inside;
+
+        for (auto it = vd.bounded_halfedges_begin(); it != vd.bounded_halfedges_end(); it++) {
+            if (vertex_in_polygon(it->source()) && !inside.contains(it->source()))
+                inside.insert(it->source());
+            if (vertex_in_polygon(it->target()) && !inside.contains(it->target()))
+                inside.insert(it->target());
+        }
+
+        return inside;
+    }
+
+    double MedialAxis::z_cross_product(Point<Inexact> p, Point<Inexact> q, Point<Inexact> r) {
+        const auto dx1 = q.x() - p.x();
+        const auto dy1 = q.y() - p.y();
+        const auto dx2 = r.x() - q.x();
+        const auto dy2 = r.y() - q.y();
+        return dx1 * dy2 - dy1 * dx2;
+    }
+
+    std::set<Point<Inexact>> MedialAxis::identify_concave_vertices_polygon() {
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+        // Keep track of concave vertices of polygon
+        std::set<Point<Inexact>> concave;
+
+        for (size_t i = 0; i < polygon.size(); i++) {
+            const auto cross_product = z_cross_product(
+                    polygon[(i + 0) % polygon.size()],
+                    polygon[(i + 1) % polygon.size()],
+                    polygon[(i + 2) % polygon.size()]
+            );
+            
+            if (cross_product < 0)
+                concave.insert(polygon[(i + 1) % polygon.size()]);
+        }
+
+        return concave;
+    }
+
+    void MedialAxis::filter_voronoi_diagram_to_medial_axis() {
+        auto inside = identify_vertices_inside_polygon();
+        auto concave = identify_concave_vertices_polygon();
+
+        for (auto it = vd.bounded_halfedges_begin(); it != vd.bounded_halfedges_end(); it++) {
+            const VertexHandle<Inexact> p = it->source();
+            const VertexHandle<Inexact> q = it->target();
+
+            // filter identity edges
+            if (p->point() == q->point())
+                continue;
+
+            // filter voronoi diagram to only those vertices inside the polygon
+            if (!inside.contains(p) || !inside.contains(q))
+                continue;
+
+            // drop those edges which are not part of the medial axis
+            if (concave.contains(p->point()) || concave.contains(q->point()))
+                continue;
+
+            // add the edge and points to the data
+            add_edge(p->point(), q->point());
         }
     }
 

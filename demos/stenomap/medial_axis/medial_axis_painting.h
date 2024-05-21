@@ -18,7 +18,7 @@ class MedialAxisPainting : public renderer::GeometryPainting {
         void paint(renderer::GeometryRenderer& renderer) const override;
 
     private:
-        medial_axis::MedialAxis _medial_axis;
+        medial_axis::MedialAxis medial_axis;
 };
 
 #endif // CARTOCROW_STENOMAP_MEDIAL_AXIS_PAINTING_H
