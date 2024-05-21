@@ -4,6 +4,7 @@
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <cmath>
 #include <unordered_map>
+#include <numbers>
 
 
 namespace cartocrow::medial_axis {
@@ -361,41 +362,54 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    void MedialAxis::retract_end_branches(double retraction_percentage) {
+
+void MedialAxis::retract_end_branches(double retraction_percentage) {
     for (int j = 0; j < branches.size(); j++) {
-        double total_length = 0.0;
-        for (size_t i = 0; i < branches[j].size() - 1; i++) {
-            total_length += std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
-        }
-
-        double retract_length = total_length * (retraction_percentage);
-        
-        double retracted_length = 0.0;
-        size_t last_index = branches[j].size() - 1; 
-        for (size_t i = 0; i < branches[j].size() - 1; i++) {
-            double segment_length = std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
-
-            if (retracted_length + segment_length >= retract_length) {
-                // Find the new point to insert based on the remaining length to retract
-                double remaining_length = retract_length - retracted_length;
-                double ratio = remaining_length / segment_length;
-                
-                Point<Inexact> new_point = interpolate(branches[j][i], branches[j][i + 1], ratio);
-                remove_vertex(branches[j][i + 1]);
-                remove_vertex(branches[j][i]);
-                add_edge(new_point, branches[j][i + 1]);
-                branches[j][i] = new_point; // Replace the point at i-1 with the new point
-                last_index = i; 
-                retracted_length += segment_length;
-                 
-                break;
+        // Function to retract branches
+        auto retract = [&](double percentage) {
+            double total_length = 0.0;
+            for (size_t i = 0; i < branches[j].size() - 1; i++) {
+                total_length += std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
             }
-        }
 
-        // remove the retracted part of the branch
-        branches[j].erase(branches[j].begin(),branches[j].begin() + last_index);
+            double retract_length = total_length * percentage;
+
+            double retracted_length = 0.0;
+            size_t last_index = branches[j].size() - 1; 
+            for (size_t i = 0; i < branches[j].size() - 1; i++) {
+                double segment_length = std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
+
+                if (retracted_length + segment_length >= retract_length) {
+                    // Find the new point to insert based on the remaining length to retract
+                    double remaining_length = retract_length - retracted_length;
+                    double ratio = remaining_length / segment_length;
+                    
+                    Point<Inexact> new_point = interpolate(branches[j][i], branches[j][i + 1], ratio);
+                    remove_vertex(branches[j][i + 1]);
+                    remove_vertex(branches[j][i]);
+                    add_edge(new_point, branches[j][i + 1]);
+                    branches[j][i] = new_point; // Replace the point at i-1 with the new point
+                    last_index = i; 
+                    retracted_length += segment_length;
+                     
+                    break;
+                } else {
+                    retracted_length += segment_length;
+                }
+            }
+
+            // Remove the retracted part of the branch
+            branches[j].erase(branches[j].begin(), branches[j].begin() + last_index);
+        };
+
+        // First retraction
+        retract(retraction_percentage);
+
+        // Second retraction based on the new length
+        retract(retraction_percentage);
     }
 }
+
 
 //compute the last new leaf
 Point<Inexact> MedialAxis::interpolate(const Point<Inexact>& start, const Point<Inexact>& end, double ratio) {
