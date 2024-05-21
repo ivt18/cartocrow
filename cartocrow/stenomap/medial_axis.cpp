@@ -1,8 +1,8 @@
 #include "medial_axis.h"
 #include "../core/core.h"
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Boolean_set_operations_2.h>
 #include <cmath>
-#include <unordered_map>
 
 namespace cartocrow::medial_axis {
 
@@ -329,6 +329,121 @@ namespace cartocrow::medial_axis {
                 add_edge(s, t);
             }
         }
+    }
+
+    void MedialAxis::compute_voronoi_diagram() {
+        vd.clear();
+
+        // Add polygon boundary to voronoi diagram
+        for (std::size_t i = 0; i < polygon.size(); i++) {
+            /* vd.insert(
+                Site_2<Inexact>(polygon[i], polygon[(i+1) % polygon.size()])
+            ); */
+            vd.insert(Site_2<Inexact>::construct_site_2(polygon[i], polygon[(i + 1) % polygon.size()]));
+        }
+
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+    }
+
+    bool MedialAxis::vertex_in_polygon(const VertexHandle<Inexact>& vh) {
+        // Make sure we do not check vertices more than once
+        std::set<VertexHandle<Inexact>> considered;
+
+        // Skip vertices which have already been considered, since a vertex may be connected to multiple halfedges
+        if(considered.count(vh) != 0) {
+            return false;
+        }
+        // Ensure we don't look at a vertex twice
+        considered.insert(vh);
+
+        // Determine if the vertex is inside the polygon
+        const auto orientation = CGAL::oriented_side(vh->point(), polygon);
+        bool inside_of_polygon = orientation == CGAL::ON_ORIENTED_BOUNDARY || orientation == CGAL::POSITIVE;
+
+        // If the vertex was inside the polygon make a note of it
+        if(inside_of_polygon) {
+            return true;
+        }
+
+        return false;
+    }
+
+    std::set<VertexHandle<Inexact>> MedialAxis::identify_vertices_inside_polygon() {
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+        // Keep track of vertices inside polygon
+        std::set<VertexHandle<Inexact>> inside;
+
+        for (auto it = vd.bounded_halfedges_begin(); it != vd.bounded_halfedges_end(); it++) {
+            if (vertex_in_polygon(it->source()) && !inside.contains(it->source()))
+                inside.insert(it->source());
+            if (vertex_in_polygon(it->target()) && !inside.contains(it->target()))
+                inside.insert(it->target());
+        }
+
+        return inside;
+    }
+
+    double MedialAxis::z_cross_product(Point<Inexact> p, Point<Inexact> q, Point<Inexact> r) {
+        const auto dx1 = q.x() - p.x();
+        const auto dy1 = q.y() - p.y();
+        const auto dx2 = r.x() - q.x();
+        const auto dy2 = r.y() - q.y();
+        return dx1 * dy2 - dy1 * dx2;
+    }
+
+    std::set<Point<Inexact>> MedialAxis::identify_concave_vertices_polygon() {
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+        // Keep track of concave vertices of polygon
+        std::set<Point<Inexact>> concave;
+
+        for (size_t i = 0; i < polygon.size(); i++) {
+            const auto cross_product = z_cross_product(
+                    polygon[(i + 0) % polygon.size()],
+                    polygon[(i + 1) % polygon.size()],
+                    polygon[(i + 2) % polygon.size()]
+            );
+            
+            if (cross_product < 0)
+                concave.insert(polygon[(i + 1) % polygon.size()]);
+        }
+
+        return concave;
+    }
+
+    MedialAxisData MedialAxis::filter_voronoi_diagram_to_medial_axis() {
+        MedialAxisData ret;
+
+        auto inside = identify_vertices_inside_polygon();
+        auto concave = identify_concave_vertices_polygon();
+
+        for (auto it = vd.bounded_halfedges_begin(); it != vd.bounded_halfedges_end(); it++) {
+            const VertexHandle<Inexact> p = it->source();
+            const VertexHandle<Inexact> q = it->target();
+
+            // filter identity edges
+            if (p->point() == q->point())
+                continue;
+
+            // filter voronoi diagram to only those vertices inside the polygon
+            if (!inside.contains(p) || !inside.contains(q))
+                continue;
+
+            // drop those edges which are not part of the medial axis
+            if (concave.contains(p->point()) || concave.contains(q->point()))
+                continue;
+
+            // add the vertices to the data
+            ret.points.insert(p->point());
+            ret.points.insert(q->point());
+            
+            // add the edge to the data
+            ret.edges.emplace(p->point(), q->point());
+        }
+        
+        return ret;
     }
 
 } // namespace cartocrow::medial_axis

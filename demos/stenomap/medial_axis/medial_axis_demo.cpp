@@ -45,6 +45,7 @@ StenomapDemo::StenomapDemo() {
 
     // Make simple polygon
     Polygon<Inexact> polygon;
+
     polygon.push_back( Point<Inexact>(-1,-1) ) ;
     /* polygon.push_back( Point<Inexact>(-4,-22) ) ; */
     polygon.push_back( Point<Inexact>(0,-22) ) ;
@@ -55,19 +56,24 @@ StenomapDemo::StenomapDemo() {
     polygon.push_back( Point<Inexact>(0,42) ) ;
     polygon.push_back( Point<Inexact>(-1,1) ) ;
     polygon.push_back( Point<Inexact>(-12,0) ) ;
+
     m_polygons.push_back(polygon);
 
     MedialAxis medial_axis(polygon);
     medial_axis.compute_grid(100, 100);
     medial_axis.prune_grid();
+    medial_axis.compute_voronoi_diagram();
+    
     // medial_axis.calculate_weight_function();
     // medial_axis.compute_centroid_neighborhoods();
     // medial_axis.compute_centroid_closest_points();
     /* medial_axis.compute_branches(); */
     /* medial_axis.compute_grid_closest_branches(); */
 
+    MedialAxisData data = medial_axis.filter_voronoi_diagram_to_medial_axis();
     MedialAxis old = medial_axis;
-    medial_axis.prune_points(0.25);
+    // medial_axis.prune_points(0.25);
+    
 
     // setup renderer
     m_renderer = new GeometryWidget();
@@ -77,20 +83,20 @@ StenomapDemo::StenomapDemo() {
 
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-            recalculate(medial_axis, old);
+            recalculate(medial_axis, old, data);
             });
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 
-    recalculate(medial_axis, old);
+    recalculate(medial_axis, old, data);
 }
 
-void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old) {
+void StenomapDemo::recalculate(const MedialAxis medial_axis, const MedialAxis old, const MedialAxisData data) {
     for (const Polygon<Inexact>& p : m_polygons) {
         // Draw polygon
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(p)), "Polygon");
         // Draw medial axis
-        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(old), "Medial Axis");
+        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(data), "Medial Axis");
         // Draw pruned medial axis
         m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(medial_axis), "Pruned medial Axis");
         // Draw grid

@@ -12,13 +12,13 @@ class MedialAxisPainting : public renderer::GeometryPainting {
 
     public:
         // Creates a new painting with the given medial axis
-        MedialAxisPainting(medial_axis::MedialAxis medial_axis);
+        MedialAxisPainting(medial_axis::MedialAxisData medial_axis_data);
 
     protected:
         void paint(renderer::GeometryRenderer& renderer) const override;
 
     private:
-        medial_axis::MedialAxis _medial_axis;
+        medial_axis::MedialAxisData medial_axis_data;
 };
 
 #endif // CARTOCROW_STENOMAP_MEDIAL_AXIS_PAINTING_H
