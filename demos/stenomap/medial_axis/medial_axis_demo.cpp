@@ -1,23 +1,23 @@
 /*
-The Necklace Map console application implements the algorithmic
-geo-visualization method by the same name, developed by
-Bettina Speckmann and Kevin Verbeek at TU Eindhoven
-(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
+   The Necklace Map console application implements the algorithmic
+   geo-visualization method by the same name, developed by
+   Bettina Speckmann and Kevin Verbeek at TU Eindhoven
+   (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+   Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+   */
 
 #include "medial_axis_demo.h"
 #include "polygon_painting.h"
@@ -51,7 +51,7 @@ using namespace cartocrow::medial_axis;
 StenomapDemo::StenomapDemo() {
     setWindowTitle("CartoCrow – Stenomap demo");
     std::filesystem::path ipePath = "/home/diego/src/cartocrow/data/europe.ipe";
-	RegionMap map = ipeToRegionMap(ipePath);
+    RegionMap map = ipeToRegionMap(ipePath);
     /* for (const auto a : map) { */
     /*     std::cout << a.first << std::endl; */
     /* } */
@@ -59,35 +59,35 @@ StenomapDemo::StenomapDemo() {
     CGAL::Polyline_simplification_2::Stop_below_count_ratio_threshold stop(0.1);
     Polygon<Inexact> pgon;
     PolygonSet<Exact> polygonSet;
-	std::vector<PolygonWithHoles<Exact>> polygons;
+    std::vector<PolygonWithHoles<Exact>> polygons;
 
     polygonSet = map["ESP"].shape;
     polygons.clear();
-	polygonSet.polygons_with_holes(std::back_inserter(polygons));
+    polygonSet.polygons_with_holes(std::back_inserter(polygons));
     double maxArea = 0;
     // To get mainland Spain we get the biggest polygon from the set (instead of some random island)
-	for (const PolygonWithHoles<Exact> p : polygons) {
+    for (const PolygonWithHoles<Exact> p : polygons) {
         if (approximate(p.outer_boundary()).area() > maxArea) {
             pgon = approximate(p.outer_boundary());
             maxArea = pgon.area();
         }
-	}
+    }
 
     // Simplifying polygon
     pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
     m_polygons.push_back(pgon);
 
     polygonSet = map["FRA"].shape;
-	polygons.clear();
-	polygonSet.polygons_with_holes(std::back_inserter(polygons));
+    polygons.clear();
+    polygonSet.polygons_with_holes(std::back_inserter(polygons));
     maxArea = 0;
     // To get mainland France we get the biggest polygon from the set
-	for (const PolygonWithHoles<Exact> p : polygons) {
+    for (const PolygonWithHoles<Exact> p : polygons) {
         if (approximate(p.outer_boundary()).area() > maxArea) {
             pgon = approximate(p.outer_boundary());
             maxArea = pgon.area();
         }
-	}
+    }
     // Simplifying polygon
     CGAL::Polyline_simplification_2::Stop_below_count_ratio_threshold stop2(0.5);
     pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
@@ -126,8 +126,8 @@ StenomapDemo::StenomapDemo() {
 
     m_medialAxisBox = new QCheckBox("Compute with obstacles");
     connect(m_medialAxisBox, &QCheckBox::stateChanged, [&]() {
-        recalculate();
-    });
+            recalculate();
+            });
     QToolBar* toolBar = new QToolBar();
     toolBar->addWidget(m_medialAxisBox);
 

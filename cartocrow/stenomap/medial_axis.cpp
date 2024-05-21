@@ -1,6 +1,5 @@
 #include "medial_axis.h"
 #include "../core/core.h"
-#include <CGAL/CORE/ExprRep.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Boolean_set_operations_2.h>
 #include <cmath>
