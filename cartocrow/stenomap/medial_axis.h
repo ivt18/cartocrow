@@ -68,7 +68,7 @@ class MedialAxis {
 	Polygon<Inexact> polygon;
 	RadiusList<Inexact> radius_list;
 	int detail_level;
-    PolygonSet<Inexact> region;
+  PolygonSet<Inexact> region;
 	std::vector<Polygon_2> circle_polygons;
 
 	// Constructs a new medial axis given single polygon

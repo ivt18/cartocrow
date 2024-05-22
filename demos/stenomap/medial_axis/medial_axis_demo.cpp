@@ -68,13 +68,12 @@ StenomapDemo::StenomapDemo() {
     medial_axis.compute_grid_closest_branches(); 
 
     MedialAxis old = medial_axis;
+    medial_axis.prune_points(0.05);
     medial_axis.retract_end_branches(0.3);
     medial_axis.calculate_weight_function();
-    medial_axis.apply_modified_negative_offset(0.5, 0.1);
-    // medial_axis.prune_points(0.25);
     medial_axis.store_points_on_medial_axis();
-
     medial_axis.apply_modified_negative_offset(0.1, 0.01);
+    //medial_axis.apply_modified_negative_offset(0.1, 0.01);
 
     // setup renderer
     m_renderer = new GeometryWidget();

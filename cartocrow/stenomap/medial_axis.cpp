@@ -273,10 +273,6 @@ namespace cartocrow::medial_axis {
             }
             std::cout << "removing branch " << minIndex << " with endpoint " << branches[minIndex][0] << std::endl;
             remove_branch(minIndex);
-            /* std::cout << "graph size = " << graph.size() << std::endl; */
-            std::cout << std::endl;
-            std::cout << std::endl;
-            /* std::cout << std::endl; */
             compute_branches();
             compute_grid_closest_branches();
             centroid_area_lost[branches[minIndex].back()] += minWeight;
@@ -438,7 +434,6 @@ void MedialAxis::apply_modified_negative_offset(double constant_offset, double m
 		vertex_radius_pair.second = new_radius;
 		//std::cout << new_radius << std::endl;
 	}
-	//std::cout << "a" << std::endl;
 	compute_negatively_offset_polygon();
 }
 
@@ -447,42 +442,17 @@ void MedialAxis::store_points_on_medial_axis() {
 	points_on_medial_axis.clear(); 
 
 	for (const auto& branch : branches) {
-	    for (size_t i = 0; i < branch.size() - 1; ++i) {
-	        Point<Inexact> start = branch[i];
-	        Point<Inexact> end = branch[i + 1];
-		points_on_medial_axis.push_back(start);
-		points_on_medial_axis.push_back(end);
-		for (double i = 1; i < 50; i++) {
-                    Point<Inexact> new_point = interpolate(start, end, i / 50.0);
-		    points_on_medial_axis.push_back(new_point);
-		}
-	    }
-	}
-	/* for (const auto& point : grid_pruned) { */
-	/* 	bool isOnMedialAxis = false; */
-
-	/* 	for (const auto& branch : branches) { */
-	/* 	    for (size_t i = 0; i < branch.size() - 1; ++i) { */
-	/* 	        Point<Inexact> start = branch[i]; */
-	/* 	        Point<Inexact> end = branch[i + 1]; */
-
-	/* 	        Segment<Inexact> segment(start, end); */
-	/* 	        auto dist = CGAL::squared_distance(point, segment); */
-	/* 	        if (dist <= threshold) { */
-	/* 	            isOnMedialAxis = true; */
-	/* 	            break; // No need to check other segments for this point */
-	/* 	        } */
-	/* 	    } */
-	/* 	    if (isOnMedialAxis) { */
-	/* 	        break; // No need to check other branches for this point */
-	/* 	    } */
-	/* 	} */
-
-	/* 	if (isOnMedialAxis) { */
-	/* 		std::cout<<"Point"<<" "<<point<<std::endl; */
-	/* 		points_on_medial_axis.push_back(point); */
-	/* 	} */
-	/* } */
+    for (size_t i = 0; i < branch.size() - 1; ++i) {
+      Point<Inexact> start = branch[i];
+      Point<Inexact> end = branch[i + 1];
+      points_on_medial_axis.push_back(start);
+      points_on_medial_axis.push_back(end);
+      for (double i = 1; i < 50; i++) {
+        Point<Inexact> new_point = interpolate(start, end, i / 50.0);
+        points_on_medial_axis.push_back(new_point);
+      }
+    }
+  }
 }
 
 Polygon_2 MedialAxis::approximate_circle(const Point_Inexact& center, double radius, int n_sides) {
@@ -501,27 +471,9 @@ void MedialAxis::compute_negatively_offset_polygon() {
 		circle_polygons.push_back(poly);
 	}
 
-	// Compute the union of all circle polygons to form the negatively offset polygon P'
-	// CGAL::Polygon_with_holes_2<CGAL::Exact_predicates_inexact_constructions_kernel> p_prime, temp_union;
-	// bool first = true;
-	// for (const Polygon_2& poly : circle_polygons) {
-	//     if (first) {
-	//         p_prime = poly; // Initialize P' with the first polygon
-	//         first = false;
-	//     } else {
-	//         CGAL::join(p_prime, poly, temp_union); // Merge into temp_union
-	//         p_prime = std::move(temp_union);
-	//     }
-	// }
-
-	//PolygonSet<Inexact> polygonSet;
-
-/* 	// Insert all circle polygons into the polygon set */
 	for (const auto& poly : circle_polygons) {
 		region.join(poly);
-		//CGAL::join(poly, region, region);
 	}
-	//polygonSet.polygons_with_holes(region);
 }
 
 MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
