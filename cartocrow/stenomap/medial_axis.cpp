@@ -425,7 +425,7 @@ void MedialAxis::apply_modified_negative_offset(double constant_offset, double m
 	for (auto& vertex_radius_pair : radius_list) {
 		// reduce the radius by the constant offset.
 		//std :: cout << "Applying modified negative offset..." << std::endl;
-		double new_radius = vertex_radius_pair.second - constant_offset;
+		double new_radius = vertex_radius_pair.second - (constant_offset * constant_offset);
 
 		// ensure the new radius does not fall under the min threshold.
 		// if it does, set it to the mini theshold.
