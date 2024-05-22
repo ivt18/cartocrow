@@ -1,22 +1,28 @@
 #include "medial_axis.h"
 #include "../core/core.h"
-#include <CGAL/CORE/ExprRep.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Boolean_set_operations_2.h>
 #include <cmath>
 #include <unordered_map>
 #include <numbers>
 
-
 namespace cartocrow::medial_axis {
 
-    void MedialAxis::add_vertex(const Point<Inexact>& s) {
-        graph[s];
-        centroid_area_lost[s];
+    MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
+        assert(shape.is_counterclockwise_oriented());
+        polygon = shape;
+
+        // compute the medial axis
+        compute_voronoi_diagram();
+        filter_voronoi_diagram_to_medial_axis();
+    }
+
+    bool equals(Point<Inexact> p, Point<Inexact> t) {
+        return (CGAL::squared_distance(p,t) < 0.01);
     }
 
     void MedialAxis::calculate_weight_function() {
-        radius_list.clear();
-        for (const auto& vertex: graph) {
+        for (const auto& vertex: medial_axis_graph) {
             const Point<Inexact>& current_point = vertex.first;
             double radius = INFINITY;
             Segment<Inexact> segment;
@@ -49,7 +55,7 @@ namespace cartocrow::medial_axis {
     void MedialAxis::compute_centroid_neighborhoods() {
         for (const auto& row : grid) {
             for (const auto& point : row) {
-                for (const auto& vertex: graph) {
+                for (const auto& vertex: medial_axis_graph) {
                     const Point<Inexact>& current_point = vertex.first;
                     centroid_neighborhoods[current_point];
                     double radius = radius_list[current_point];
@@ -67,7 +73,7 @@ namespace cartocrow::medial_axis {
             for (const auto& point : row) {
                 Point<Inexact> closest_centroid;
                 double min_distance = INFINITY;
-                for (const auto& vertex: graph) {
+                for (const auto& vertex: medial_axis_graph) {
                     const Point<Inexact>& current_point = vertex.first;
                     centroid_closest_points[current_point];
                     double distance = CGAL::squared_distance(current_point, point);
@@ -92,7 +98,12 @@ namespace cartocrow::medial_axis {
         }
     }
 
-    void MedialAxis::remove_vertex(const Point<Inexact>& s) {
+    void MedialAxis::add_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s) {
+        graph[s];
+        centroid_area_lost[s];
+    }
+
+    void MedialAxis::remove_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s) {
         // Remove s from the adjacency lists of its neighbors.
         for (const auto& neighbor : graph[s]) {
             auto& neighborsList = graph[neighbor];
@@ -103,10 +114,10 @@ namespace cartocrow::medial_axis {
         graph.erase(s);
     }
 
-    void MedialAxis::add_edge(const Point<Inexact>& s, const Point<Inexact>& t) {
+    void MedialAxis::add_edge(AdjacencyList<Inexact>& graph, const Point<Inexact>& s, const Point<Inexact>& t) {
         // Add both vertices to the adjacency list
-        add_vertex(s);
-        add_vertex(t);
+        add_vertex(graph, s);
+        add_vertex(graph, t);
 
         // Add the edge to the adjacency list in both directions
         graph[s].push_back(t);
@@ -115,7 +126,7 @@ namespace cartocrow::medial_axis {
 
     void MedialAxis::print_adjacency_list() {
         std::cout << "Printing adjacency list..." << std::endl;
-        for (const auto& pair : graph) {
+        for (const auto& pair : medial_axis_graph) {
             std::cout << "Vertex (" << pair.first << ") adjacency list:\n";
             for (const auto& neighbor : pair.second) {
                 std::cout << "\t(" << neighbor << ")\n";
@@ -132,17 +143,19 @@ namespace cartocrow::medial_axis {
   
         // Identify endpoints and junction points
         std::set<Point<Inexact>> endpoints, junctions;
-        for (const auto& entry : graph) {
+        endpoints.clear();
+        junctions.clear();
+        for (const auto& entry : medial_axis_graph) {
             size_t degree = entry.second.size();
             if (degree == 2) { // Endpoint
                 endpoints.insert(entry.first);
-            } else if (degree > 3) { // Junction point
+            } else if (degree > 4) { // Junction point
                 junctions.insert(entry.first);
             }
         }
 
         // Ensure graph is not empty and has endpoints and junctions
-        if (graph.empty() || endpoints.empty() || junctions.empty()) {
+        if (medial_axis_graph.empty() || endpoints.empty() || junctions.empty()) {
             std::cout << "Graph, endpoints, or junctions are empty." << std::endl;
             return;
         }
@@ -175,7 +188,7 @@ namespace cartocrow::medial_axis {
                     break;
                 }
 
-                for (const auto& adj : graph.at(current)) {
+                for (const auto& adj : medial_axis_graph.at(current)) {
                     if (visited.find(adj) == visited.end()) {
                         queue.push(adj);
                         visited.insert(adj);
@@ -194,27 +207,31 @@ namespace cartocrow::medial_axis {
             }
         }
 
-        for (const auto& entry : graph) {
+        noBranchSegments.clear();
+        for (const auto& entry : medial_axis_graph) {
             for (const auto& adj : entry.second) {
                 if (allSegments.find({entry.first, adj}) == allSegments.end()) {
                     noBranchSegments.push_back(Segment<Inexact>(entry.first, adj));
                 }
             }
         }
+        std::cout << "branches size: " << branches.size() << std::endl;
     }
 
     void MedialAxis::remove_branch(int index) {
         Branch<Inexact> branch = branches[index];
-        // Due to implementation of compute_branches(), the junction point will be the last point 
-        // in the branch vector, which we should not remove when removing the branch
+
+        // If the branch only contains the junction point or is empty, nothing to remove.
         if (branch.size() <= 1) {
-            // If the branch only contains the junction point or is empty, nothing to remove.
             return;
         }
 
+        // Due to implementation of compute_branches(), the junction point will be the last point 
+        // in the branch vector, which we should not remove when removing the branch
         for (int i = 0; i < branch.size() - 1; ++i) {
-            remove_vertex(branch[i]);
+            remove_vertex(medial_axis_graph, branch[i]);
         }
+
         for (int j = 0; j < branch_closest_grid_points[index].size(); j++) {
             // since indices go in decreasing order we can simply call erase without worrying
             // about the indices shifting down
@@ -225,7 +242,7 @@ namespace cartocrow::medial_axis {
      std::vector<Point<Inexact>> MedialAxis::get_points_not_in_branch(int i) {
         Branch<Inexact> branch = branches[i];
         std::vector<Point<Inexact>> points_not_in_branch;
-        for (const auto& point: graph) {
+        for (const auto& point: medial_axis_graph) {
             Point<Inexact> cur = point.first;
             for (int j = 0; j < branch.size() - 1; j++) {
                 if (cur == branch[j]) {
@@ -254,11 +271,12 @@ namespace cartocrow::medial_axis {
         compute_branches();
         compute_grid_closest_branches();
         int grid_size = grid_pruned.size();
+        int removedArea = 0;
         while (true) {
             double minWeight = INFINITY;
             int minIndex = -1;
 
-            /* std::cout << "number of branches = " << branches.size() << std::endl; */
+            std::cout << "number of branches = " << branches.size() << std::endl;
             // Find the branch with the minimum weight
             for (int i = 0; i < branches.size(); ++i) {
                 double weight = get_branch_weight(i);
@@ -271,11 +289,11 @@ namespace cartocrow::medial_axis {
                 std::cout << "Pruning finished" << std::endl;
                 return;
             }
-            std::cout << "removing branch " << minIndex << " with endpoint " << branches[minIndex][0] << std::endl;
             remove_branch(minIndex);
             compute_branches();
             compute_grid_closest_branches();
             centroid_area_lost[branches[minIndex].back()] += minWeight;
+            removedArea += minWeight;
         }
     }
 
@@ -305,17 +323,17 @@ namespace cartocrow::medial_axis {
             double rad_sqr_distance;
             for (int j = 0; j < branches.size(); j++) {
                 rad_sqr_distance = CGAL::squared_distance(grid_pruned[p], branches[j].back());
-                if (rad_sqr_distance <= radius_list[branches[j].back()])
+                if (rad_sqr_distance <= radius_list[branches[j].back()]) {
                     grid_closest_branches[p] = -1;
+                }
             }
         }
-        Point<Inexact> testp(0,-12);
         for (int p = 0; p < grid_pruned.size(); p++) {
             double min_sqr_distance = INFINITY;
             double cur_sqr_distance;
             // Segments in a branch
             for (int j = 0; j < branches.size(); j++) {
-                for (auto i = branches[j].begin(); i != branches[j].end(); i++) {
+                for (auto i = branches[j].begin(); i != branches[j].end() - 1; i++) {
                     Segment<Inexact> cur_segment(*i, *(i+1));
                     cur_sqr_distance = CGAL::squared_distance(grid_pruned[p], cur_segment);
                     if (cur_sqr_distance < min_sqr_distance && grid_closest_branches[p] != -1) {
@@ -328,10 +346,6 @@ namespace cartocrow::medial_axis {
             for (int j = 0; j < noBranchSegments.size(); j++) {
                 cur_sqr_distance = CGAL::squared_distance(grid_pruned[p], noBranchSegments[j]);
                 if (cur_sqr_distance < min_sqr_distance && grid_closest_branches[p] != -1) {
-                    if (CGAL::squared_distance(grid_pruned[p], testp) < 0.01) {
-                        std::cout << "going to: " << noBranchSegments[j] << std::endl;
-                        std::cout << "from branch: " << branches[grid_closest_branches[p]][0] << std::endl;
-                    }
                     grid_closest_branches[p] = -1;
                 }
             }
@@ -358,7 +372,6 @@ namespace cartocrow::medial_axis {
         }
     }
 
-
 void MedialAxis::retract_end_branches(double retraction_percentage) {
     for (int j = 0; j < branches.size(); j++) {
         // Function to retract branches
@@ -381,9 +394,9 @@ void MedialAxis::retract_end_branches(double retraction_percentage) {
                     double ratio = remaining_length / segment_length;
                     
                     Point<Inexact> new_point = interpolate(branches[j][i], branches[j][i + 1], ratio);
-                    remove_vertex(branches[j][i + 1]);
-                    remove_vertex(branches[j][i]);
-                    add_edge(new_point, branches[j][i + 1]);
+                    remove_vertex(medial_axis_graph, branches[j][i + 1]);
+                    remove_vertex(medial_axis_graph, branches[j][i]);
+                    add_edge(medial_axis_graph, new_point, branches[j][i + 1]);
                     branches[j][i] = new_point; // Replace the point at i-1 with the new point
                     last_index = i; 
                     retracted_length += segment_length;
@@ -391,6 +404,7 @@ void MedialAxis::retract_end_branches(double retraction_percentage) {
                     break;
                 } else {
                     retracted_length += segment_length;
+                    last_index = i; 
                 }
             }
 
@@ -405,6 +419,18 @@ void MedialAxis::retract_end_branches(double retraction_percentage) {
         retract(retraction_percentage);
     }
 }
+
+    void MedialAxis::compute_voronoi_diagram() {
+        vd.clear();
+
+        // Add polygon boundary to voronoi diagram
+        for (std::size_t i = 0; i < polygon.size(); i++) {
+            vd.insert(Site_2<Inexact>::construct_site_2(polygon[i], polygon[(i + 1) % polygon.size()]));
+        }
+
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+    }
 
 
 //compute the last new leaf
@@ -476,27 +502,116 @@ void MedialAxis::compute_negatively_offset_polygon() {
 	}
 }
 
-MedialAxis::MedialAxis(const Polygon<Inexact>& shape) {
-	assert(shape.is_counterclockwise_oriented());
-	polygon = shape;
-	// create interior straight skeleton
-	// TODO: maybe make a separate function to just compute this skeleton,
-	// and call it in the constructor
-	// TODO: maybe even put this under the Polygon class?
-	iss = CGAL::create_interior_straight_skeleton_2(shape);
-	if (!iss) {
-		std::cout << "Failed creating interior straight skeleton." << std::endl;
-		exit(1);
-	}
-	std::cout << "Successfully computed interior straight skeleton." << std::endl;
+    bool MedialAxis::vertex_in_polygon(const VertexHandle<Inexact>& vh) {
+        // Make sure we do not check vertices more than once
+        std::set<VertexHandle<Inexact>> considered;
 
-	for (auto halfedge = iss->halfedges_begin(); halfedge != iss->halfedges_end(); halfedge++) {
-		if (halfedge->is_bisector()) {
-			Point<Inexact> t = halfedge->vertex()->point();
-			Point<Inexact> s = halfedge->opposite()->vertex()->point();
-			add_edge(s, t);
-		}
-	}
-}
+        // Skip vertices which have already been considered, since a vertex may be connected to multiple halfedges
+        if(considered.count(vh) != 0) {
+            return false;
+        }
+        // Ensure we don't look at a vertex twice
+        considered.insert(vh);
+
+        // Determine if the vertex is inside the polygon
+        const auto orientation = CGAL::oriented_side(vh->point(), polygon);
+        bool inside_of_polygon = orientation == CGAL::ON_ORIENTED_BOUNDARY || orientation == CGAL::POSITIVE;
+
+        // If the vertex was inside the polygon make a note of it
+        if(inside_of_polygon) {
+            return true;
+        }
+
+        return false;
+    }
+
+    std::set<VertexHandle<Inexact>> MedialAxis::identify_vertices_inside_polygon() {
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+        // Keep track of vertices inside polygon
+        std::set<VertexHandle<Inexact>> inside;
+
+        for (auto it = vd.bounded_halfedges_begin(); it != vd.bounded_halfedges_end(); it++) {
+            if (vertex_in_polygon(it->source()) && !inside.contains(it->source()))
+                inside.insert(it->source());
+            if (vertex_in_polygon(it->target()) && !inside.contains(it->target()))
+                inside.insert(it->target());
+        }
+
+        return inside;
+    }
+
+    double MedialAxis::z_cross_product(Point<Inexact> p, Point<Inexact> q, Point<Inexact> r) {
+        const auto dx1 = q.x() - p.x();
+        const auto dy1 = q.y() - p.y();
+        const auto dx2 = r.x() - q.x();
+        const auto dy2 = r.y() - q.y();
+        return dx1 * dy2 - dy1 * dx2;
+    }
+
+    std::set<Point<Inexact>> MedialAxis::identify_concave_vertices_polygon() {
+        // Ensure voronoi diagram is valid
+        assert(vd.is_valid());
+        // Keep track of concave vertices of polygon
+        std::set<Point<Inexact>> concave;
+
+        for (size_t i = 0; i < polygon.size(); i++) {
+            const auto cross_product = z_cross_product(
+                    polygon[(i + 0) % polygon.size()],
+                    polygon[(i + 1) % polygon.size()],
+                    polygon[(i + 2) % polygon.size()]
+            );
+            
+            if (cross_product < 0)
+                concave.insert(polygon[(i + 1) % polygon.size()]);
+        }
+
+        return concave;
+    }
+
+    void MedialAxis::filter_voronoi_diagram_to_medial_axis() {
+        auto inside = identify_vertices_inside_polygon();
+        auto concave = identify_concave_vertices_polygon();
+
+        for (auto it = vd.bounded_halfedges_begin(); it != vd.bounded_halfedges_end(); it++) {
+            const VertexHandle<Inexact> p = it->source();
+            const VertexHandle<Inexact> q = it->target();
+
+            // filter identity edges
+            if (p->point() == q->point())
+                continue;
+
+            // filter voronoi diagram to only those vertices inside the polygon
+            if (!inside.contains(p) || !inside.contains(q))
+                continue;
+
+            // drop those edges which are not part of the medial axis
+            if (concave.contains(p->point()) || concave.contains(q->point()))
+                continue;
+
+            // add the edge and points to the data
+            add_edge(medial_axis_graph, p->point(), q->point());
+        }
+    }
+	
+  void MedialAxis::compute_visibility_graph(std::list<Point<Inexact>> feature_points) {
+    for(auto p : feature_points) {
+      for (auto q : feature_points) {
+        if (p == q) continue;
+        bool visible = true;
+        Segment<Inexact> seg(p,q);
+        for (auto edgeIt = polygon.edges_begin(); edgeIt != polygon.edges_end(); ++edgeIt) {
+          Segment<Inexact> edge = *edgeIt;
+          if (CGAL::do_intersect(seg, edge)) {
+            visible = false;
+            break;
+          }
+        }
+        if (visible) {
+          add_edge(visibility_graph, p, q);
+        }
+      }
+    }
+  }
 
 } // namespace cartocrow::medial_axis

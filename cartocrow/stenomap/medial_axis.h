@@ -6,7 +6,11 @@
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Polygon_with_holes_2.h>
-
+#include <CGAL/Segment_Delaunay_graph_2.h>
+#include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
+#include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
+#include <CGAL/Segment_Delaunay_graph_traits_2.h>
+#include <CGAL/Voronoi_diagram_2.h>
 
 
 // TODO: properly define all of this
@@ -16,7 +20,6 @@ typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef K::Point_2 Point_Inexact;
 typedef CGAL::Polygon_2<K> Polygon_2;
 typedef boost::shared_ptr<Ss> SsPtr;
-
 
 template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
 template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
@@ -29,13 +32,21 @@ template <typename K> using RemovedGridPoints = std::unordered_set<Point<K>*>;
 template <typename K> using RadiusList = std::map<Point<K>, double>;
 template <typename K> using AreaLostList = std::map<Point<K>, int>;
 
+template <typename K> using Gt = CGAL::Segment_Delaunay_graph_traits_2<K>;
+template <typename K> using SDG2 = CGAL::Segment_Delaunay_graph_2<Gt<K>>;
+template <typename K> using AT = CGAL::Segment_Delaunay_graph_adaptation_traits_2<SDG2<K>>;
+template <typename K> using AP = CGAL::Segment_Delaunay_graph_degeneracy_removal_policy_2<SDG2<K>>;
+template <typename K> using VoronoiDiagram = CGAL::Voronoi_diagram_2<SDG2<K>, AT<K>, AP<K>>;
+template <typename K> using Site_2 = AT<K>::Site_2;
+template <typename K> using VertexHandle = VoronoiDiagram<K>::Vertex_handle;
+
 class MedialAxis {
   private:
-	// pointer to interior straight skeleton
-	SsPtr iss;
 	// adjacency list
-
-    AdjacencyList<Inexact> graph;
+  AdjacencyList<Inexact> medial_axis_graph;
+  
+  // Visibility graph
+  AdjacencyList<Inexact> visibility_graph;
 	
 	// map between centroid and points in its radius
 	AdjacencyList<Inexact> centroid_neighborhoods;
@@ -62,6 +73,12 @@ class MedialAxis {
 
 	// Map between a centroid and the area lost
 	AreaLostList<Inexact> centroid_area_lost;
+
+    // Voronoi diagram, for medial axis computation
+    VoronoiDiagram<Inexact> vd;
+
+    bool vertex_in_polygon(const VertexHandle<Inexact>& vh);
+    double z_cross_product(Point<Inexact> p, Point<Inexact> q, Point<Inexact> r);
 	
 
   public:
@@ -74,11 +91,11 @@ class MedialAxis {
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
 	// Adds vertex to the adjacency list
-	void add_vertex(const Point<Inexact>& s);
+	void add_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s);
 	// Removes vertex from the adjacency list
-	void remove_vertex(const Point<Inexact>& s);
+	void remove_vertex(AdjacencyList<Inexact>& graph, const Point<Inexact>& s);
 	// Adds edge to the adjacency list
-	void add_edge(const Point<Inexact>& s, const Point<Inexact>& t);
+	void add_edge(AdjacencyList<Inexact>& graph, const Point<Inexact>& s, const Point<Inexact>& t);
 	// Prints the adjacency list
 	void print_adjacency_list();
 	// Calculates the weight function for each point
@@ -113,11 +130,17 @@ class MedialAxis {
 	void store_points_on_medial_axis();
 	std::vector<Point<Inexact>> points_on_medial_axis;
 	void compute_negatively_offset_polygon();
+    void compute_visibility_graph(std::list<Point<Inexact>> feature_points);
 	std::vector<Point<Inexact>> get_points_not_in_branch(int i);
+
+    void compute_voronoi_diagram();
+    std::set<VertexHandle<Inexact>> identify_vertices_inside_polygon();
+    std::set<Point<Inexact>> identify_concave_vertices_polygon();
+    void filter_voronoi_diagram_to_medial_axis();
 
     // Getters
     AdjacencyList<Inexact> get_graph() const {
-        return graph;
+        return medial_axis_graph;
     }
 	// Return branches of the medial axis
 	std::vector<Branch<Inexact>> get_branches() const {
@@ -129,6 +152,9 @@ class MedialAxis {
 
 	SimpleGrid<Inexact> get_pruned_grid() const {
         return grid_pruned;
+    }
+    VoronoiDiagram<Inexact> get_voronoi_diagram() const {
+        return vd;
     }
 };
 
