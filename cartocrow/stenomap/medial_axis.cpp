@@ -3,6 +3,8 @@
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Boolean_set_operations_2.h>
 #include <cmath>
+#include <unordered_map>
+#include <numbers>
 
 namespace cartocrow::medial_axis {
 
@@ -32,6 +34,21 @@ namespace cartocrow::medial_axis {
             }
             radius_list.insert(std::make_pair(current_point, radius));
             
+        }
+    }
+
+    void MedialAxis::compute_radius() {
+        radius_list.clear();
+        for (const auto& cur_point: points_on_medial_axis) {
+            double radius = INFINITY;
+            Segment<Inexact> segment;
+            Segment<Inexact> segment2;
+            for (auto edgeIt = polygon.edges_begin(); edgeIt != polygon.edges_end(); ++edgeIt) {
+                Segment<Inexact> edge = *edgeIt;
+                Inexact::FT dist = CGAL::squared_distance(cur_point, edge);
+                if (dist < radius) radius = dist;
+            }
+            radius_list.insert(std::make_pair(cur_point, radius));
         }
     }
 
@@ -355,6 +372,54 @@ namespace cartocrow::medial_axis {
         }
     }
 
+void MedialAxis::retract_end_branches(double retraction_percentage) {
+    for (int j = 0; j < branches.size(); j++) {
+        // Function to retract branches
+        auto retract = [&](double percentage) {
+            double total_length = 0.0;
+            for (size_t i = 0; i < branches[j].size() - 1; i++) {
+                total_length += std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
+            }
+
+            double retract_length = total_length * percentage;
+
+            double retracted_length = 0.0;
+            size_t last_index = branches[j].size() - 1; 
+            for (size_t i = 0; i < branches[j].size() - 1; i++) {
+                double segment_length = std::sqrt(CGAL::squared_distance(branches[j][i], branches[j][i + 1]));
+
+                if (retracted_length + segment_length >= retract_length) {
+                    // Find the new point to insert based on the remaining length to retract
+                    double remaining_length = retract_length - retracted_length;
+                    double ratio = remaining_length / segment_length;
+                    
+                    Point<Inexact> new_point = interpolate(branches[j][i], branches[j][i + 1], ratio);
+                    remove_vertex(medial_axis_graph, branches[j][i + 1]);
+                    remove_vertex(medial_axis_graph, branches[j][i]);
+                    add_edge(medial_axis_graph, new_point, branches[j][i + 1]);
+                    branches[j][i] = new_point; // Replace the point at i-1 with the new point
+                    last_index = i; 
+                    retracted_length += segment_length;
+                     
+                    break;
+                } else {
+                    retracted_length += segment_length;
+                    last_index = i; 
+                }
+            }
+
+            // Remove the retracted part of the branch
+            branches[j].erase(branches[j].begin(), branches[j].begin() + last_index);
+        };
+
+        // First retraction
+        retract(retraction_percentage);
+
+        // Second retraction based on the new length
+        retract(retraction_percentage);
+    }
+}
+
     void MedialAxis::compute_voronoi_diagram() {
         vd.clear();
 
@@ -366,6 +431,76 @@ namespace cartocrow::medial_axis {
         // Ensure voronoi diagram is valid
         assert(vd.is_valid());
     }
+
+
+//compute the last new leaf
+Point<Inexact> MedialAxis::interpolate(const Point<Inexact>& start, const Point<Inexact>& end, double ratio) {
+    auto x = start.x() + ratio * (end.x() - start.x());
+    auto y = start.y() + ratio * (end.y() - start.y());
+    return Point<Inexact>(x, y);
+}
+
+
+void MedialAxis::apply_modified_negative_offset(double constant_offset, double min_radius) {
+	compute_radius();
+	// iterate through each vertex-radius pair in the radius_list.
+	for (auto& vertex_radius_pair : radius_list) {
+		// reduce the radius by the constant offset.
+		//std :: cout << "Applying modified negative offset..." << std::endl;
+		double new_radius = vertex_radius_pair.second - (constant_offset * constant_offset);
+
+		// ensure the new radius does not fall under the min threshold.
+		// if it does, set it to the mini theshold.
+		if (new_radius < min_radius) {
+			new_radius = min_radius;
+			//new_radius = 0;
+		}
+		// print old vs new radious
+		//std::cout << "Old radius: " << vertex_radius_pair.second << " New radius: " << new_radius << std::endl;
+		vertex_radius_pair.second = new_radius;
+		//std::cout << new_radius << std::endl;
+	}
+	compute_negatively_offset_polygon();
+}
+
+void MedialAxis::store_points_on_medial_axis() {
+	double threshold = 1e-1; // make this smaller maybe ;1e-5 is too small
+	points_on_medial_axis.clear(); 
+
+	for (const auto& branch : branches) {
+    for (size_t i = 0; i < branch.size() - 1; ++i) {
+      Point<Inexact> start = branch[i];
+      Point<Inexact> end = branch[i + 1];
+      points_on_medial_axis.push_back(start);
+      points_on_medial_axis.push_back(end);
+      for (double i = 1; i < 50; i++) {
+        Point<Inexact> new_point = interpolate(start, end, i / 50.0);
+        points_on_medial_axis.push_back(new_point);
+      }
+    }
+  }
+}
+
+Polygon_2 MedialAxis::approximate_circle(const Point_Inexact& center, double radius, int n_sides) {
+	Polygon_2 poly;
+	for (int i = 0; i < n_sides; ++i) {
+		double angle = 2 * std::numbers::pi * i / n_sides;
+		poly.push_back(Point_Inexact(center.x() + radius * std::cos(angle), center.y() + radius * std::sin(angle)));
+	}
+	return poly;
+}
+
+void MedialAxis::compute_negatively_offset_polygon() {
+	// Generate approximated circle polygons for each point with the modified radius
+	for (const auto& vertex_radius_pair : radius_list) {
+		Polygon_2 poly = approximate_circle(vertex_radius_pair.first, std::sqrt(vertex_radius_pair.second), 20);
+		circle_polygons.push_back(poly);
+	}
+
+	for (const auto& poly : circle_polygons) {
+		region.join(poly);
+	}
+}
 
     bool MedialAxis::vertex_in_polygon(const VertexHandle<Inexact>& vh) {
         // Make sure we do not check vertices more than once

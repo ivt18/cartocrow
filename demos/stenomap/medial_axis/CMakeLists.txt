@@ -1,6 +1,7 @@
 set(SOURCES
     medial_axis_demo.cpp
     polygon_painting.cpp
+    polygon_set_painting.cpp
     medial_axis_painting.cpp
     pruned_medial_axis_painting.cpp
     grid_painting.cpp

@@ -21,6 +21,7 @@
 
 #include "medial_axis_demo.h"
 #include "polygon_painting.h"
+#include "polygon_set_painting.h"
 #include "medial_axis_painting.h"
 #include "pruned_medial_axis_painting.h"
 #include "grid_painting.h"
@@ -75,7 +76,7 @@ StenomapDemo::StenomapDemo() {
 
     // Simplifying polygon
     pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
-    m_polygons.push_back(pgon);
+    /* m_polygons.push_back(pgon); */
 
     polygonSet = map["FRA"].shape;
     polygons.clear();
@@ -91,31 +92,44 @@ StenomapDemo::StenomapDemo() {
     // Simplifying polygon
     CGAL::Polyline_simplification_2::Stop_below_count_ratio_threshold stop2(0.5);
     pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
-    m_polygons.push_back(pgon);
+    /* m_polygons.push_back(pgon); */
 
-    /* Polygon<Inexact> polygon; */
-    /* // Make simple polygon */
-    /* polygon.push_back( Point<Inexact>(-1,-1) ) ; */
+    Polygon<Inexact> polygon;
+    // Make simple polygon
+    polygon.push_back( Point<Inexact>(-1,-1) ) ;
     /* polygon.push_back( Point<Inexact>(-4,-22) ) ; */
-    /* polygon.push_back( Point<Inexact>(0,-22) ) ; */
-    /* polygon.push_back( Point<Inexact>(1,-1) ) ; */
-    /* polygon.push_back( Point<Inexact>(32,0) ) ; */
+    polygon.push_back( Point<Inexact>(0,-22) ) ;
+    polygon.push_back( Point<Inexact>(1,-1) ) ;
+    polygon.push_back( Point<Inexact>(32,0) ) ;
     /* polygon.push_back( Point<Inexact>(32,20) ) ; */
-    /* polygon.push_back( Point<Inexact>(1,1) ) ; */
-    /* polygon.push_back( Point<Inexact>(0,42) ) ; */
-    /* polygon.push_back( Point<Inexact>(-1,1) ) ; */
-    /* polygon.push_back( Point<Inexact>(-12,0) ) ; */
-    /* m_polygons.push_back(polygon); */
+    polygon.push_back( Point<Inexact>(1,1) ) ;
+    polygon.push_back( Point<Inexact>(0,42) ) ;
+    polygon.push_back( Point<Inexact>(-1,1) ) ;
+    polygon.push_back( Point<Inexact>(-12,0) ) ;
+    m_polygons.push_back(polygon);
 
     for (Polygon<Inexact> polygon : m_polygons) {
         MedialAxis medial_axis(polygon);
-
-        medial_axis.compute_grid(50, 50);
-        medial_axis.prune_grid();
-        medial_axis.compute_branches();
-
         m_medialAxisOld.push_back(medial_axis);
+        medial_axis.compute_grid(100, 100);
+        medial_axis.prune_grid();
+
+        medial_axis.compute_branches();
+        medial_axis.calculate_weight_function();
+        medial_axis.compute_centroid_neighborhoods();
+        medial_axis.compute_centroid_closest_points();
+        medial_axis.compute_grid_closest_branches(); 
+
         medial_axis.prune_points(0.015);
+        /* medial_axis.prune_points(0.05); */
+
+
+        medial_axis.retract_end_branches(0.3);
+        medial_axis.calculate_weight_function();
+        medial_axis.store_points_on_medial_axis();
+        medial_axis.apply_modified_negative_offset(0.1, 0.01);
+        //medial_axis.apply_modified_negative_offset(0.1, 0.01);
+ 
         m_medialAxis.push_back(medial_axis);
     }
     // setup renderer
@@ -147,6 +161,8 @@ void StenomapDemo::recalculate() {
         m_renderer->addPainting(std::make_shared<GridPainting>(m_medialAxis[i]), "Grid" + index);
         // Draw pruned grid
         m_renderer->addPainting(std::make_shared<PrunedGridPainting>(m_medialAxis[i]), "Pruned grid" + index);
+        // Draw new region
+        m_renderer->addPainting(std::make_shared<PolygonSetPainting>(m_medialAxis[i].region), "Simplified polygon region");
     }
 }
 

@@ -2,14 +2,24 @@
 #define CARTOCROW_STENOMAP_MEDIAL_AXIS_H
 
 #include "../core/core.h"
+#include <CGAL/create_straight_skeleton_2.h>
+#include <CGAL/Polygon_2.h>
+#include <CGAL/Boolean_set_operations_2.h>
+#include <CGAL/Polygon_with_holes_2.h>
 #include <CGAL/Segment_Delaunay_graph_2.h>
 #include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
 #include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
 #include <CGAL/Segment_Delaunay_graph_traits_2.h>
 #include <CGAL/Voronoi_diagram_2.h>
 
+
 // TODO: properly define all of this
 namespace cartocrow::medial_axis {
+typedef CGAL::Straight_skeleton_2<Inexact> Ss;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef K::Point_2 Point_Inexact;
+typedef CGAL::Polygon_2<K> Polygon_2;
+typedef boost::shared_ptr<Ss> SsPtr;
 
 template <typename K> using AdjacencyList = std::map<Point<K>, std::list<Point<K>>>;
 template <typename K> using Grid = std::vector<std::vector<Point<K>>>;
@@ -74,7 +84,9 @@ class MedialAxis {
   public:
 	Polygon<Inexact> polygon;
 	RadiusList<Inexact> radius_list;
-	
+	int detail_level;
+  PolygonSet<Inexact> region;
+	std::vector<Polygon_2> circle_polygons;
 
 	// Constructs a new medial axis given single polygon
 	MedialAxis(const Polygon<Inexact>& shape);
@@ -88,6 +100,7 @@ class MedialAxis {
 	void print_adjacency_list();
 	// Calculates the weight function for each point
 	void calculate_weight_function();
+	void compute_radius();
 	// Compute branches
 	void compute_branches();
 	// Get weight of branch
@@ -108,8 +121,16 @@ class MedialAxis {
 
 	void prune_grid();
 
-  void compute_visibility_graph(std::list<Point<Inexact>> feature_points);
+	void retract_end_branches(double retraction_percentage);
+    void apply_modified_negative_offset(double constant_offset, double min_radius);
+    Point<Inexact> interpolate(const Point<Inexact>& start, const Point<Inexact>& end, double ratio);
 
+	Polygon_2 approximate_circle(const Point_Inexact& center, double radius, int n_sides);
+
+	void store_points_on_medial_axis();
+	std::vector<Point<Inexact>> points_on_medial_axis;
+	void compute_negatively_offset_polygon();
+    void compute_visibility_graph(std::list<Point<Inexact>> feature_points);
 	std::vector<Point<Inexact>> get_points_not_in_branch(int i);
 
     void compute_voronoi_diagram();
@@ -121,6 +142,10 @@ class MedialAxis {
     AdjacencyList<Inexact> get_graph() const {
         return medial_axis_graph;
     }
+	// Return branches of the medial axis
+	std::vector<Branch<Inexact>> get_branches() const {
+		return branches;
+	}
     Grid<Inexact> get_grid() const {
         return grid;
     }
