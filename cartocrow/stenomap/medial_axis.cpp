@@ -594,22 +594,42 @@ void MedialAxis::compute_negatively_offset_polygon() {
         }
     }
 	
-  void MedialAxis::compute_visibility_graph(std::list<Point<Inexact>> feature_points) {
+void MedialAxis::compute_visibility_graph(std::list<Point<Inexact>> feature_points) {
+    // extract the polygons from the polygon set
+    /* std::list<PolygonWithHoles<Inexact>> polygons;
+    region.polygons_with_holes(std::back_inserter(polygons)); */
+    
     for(auto p : feature_points) {
       for (auto q : feature_points) {
         if (p == q) continue;
         bool visible = true;
         Segment<Inexact> seg(p,q);
-        for (auto edgeIt = polygon.edges_begin(); edgeIt != polygon.edges_end(); ++edgeIt) {
-          Segment<Inexact> edge = *edgeIt;
-          if (CGAL::do_intersect(seg, edge)) {
-            visible = false;
-            break;
-          }
+        /* for (const PolygonWithHoles<Inexact>& pwh : polygons) {
+            const Polygon<Inexact> outer_boundary = pwh.outer_boundary();
+
+            // iterate over edges in outer boundary
+            for (auto edgeIt = outer_boundary.edges_begin(); edgeIt != outer_boundary.edges_end(); ++edgeIt) {
+              Segment<Inexact> edge = *edgeIt;
+              if (CGAL::do_intersect(seg, edge)) {
+                visible = false;
+                break;
+              }
+            }
+
+            // iterate over the holes
+            for (auto holeIt = pwh.holes_begin(); holeIt != pwh.holes_end(); ++holeIt) {
+                for (auto edgeIt = holeIt->edges_begin(); edgeIt != holeIt->edges_end(); ++edgeIt) {
+                  Segment<Inexact> edge = *edgeIt;
+                  if (CGAL::do_intersect(seg, edge)) {
+                    visible = false;
+                    break;
+                  }
+                }
+            }
         }
         if (visible) {
           add_edge(visibility_graph, p, q);
-        }
+        } */
       }
     }
   }
