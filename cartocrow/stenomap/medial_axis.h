@@ -44,6 +44,9 @@ class MedialAxis {
   private:
 	// adjacency list
   AdjacencyList<Inexact> medial_axis_graph;
+
+  // backbone
+  std::vector<Point<Inexact>> backbone;
   
   // Visibility graph
   AdjacencyList<Inexact> visibility_graph;
@@ -137,6 +140,7 @@ class MedialAxis {
     std::set<VertexHandle<Inexact>> identify_vertices_inside_polygon();
     std::set<Point<Inexact>> identify_concave_vertices_polygon();
     void filter_voronoi_diagram_to_medial_axis();
+  void compute_path_backbone();
 
     // Getters
     AdjacencyList<Inexact> get_graph() const {
@@ -155,6 +159,14 @@ class MedialAxis {
     }
     VoronoiDiagram<Inexact> get_voronoi_diagram() const {
         return vd;
+    }
+    
+    AdjacencyList<Inexact> get_vis_graph() const {
+        return visibility_graph;
+    }
+
+    std::vector<Point<Inexact>> get_backbone() const {
+        return backbone;
     }
 };
 
