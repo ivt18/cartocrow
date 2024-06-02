@@ -6,6 +6,8 @@ set(SOURCES
     pruned_medial_axis_painting.cpp
     grid_painting.cpp
     pruned_grid_painting.cpp
+    visibility_graph_painting.cpp
+    backbone_painting.cpp
 )
 
 add_executable(medial_axis_demo ${SOURCES})

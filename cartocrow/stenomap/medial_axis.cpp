@@ -215,7 +215,7 @@ namespace cartocrow::medial_axis {
                 }
             }
         }
-        std::cout << "branches size: " << branches.size() << std::endl;
+        /* std::cout << "branches size: " << branches.size() << std::endl; */
     }
 
     void MedialAxis::remove_branch(int index) {
@@ -276,7 +276,7 @@ namespace cartocrow::medial_axis {
             double minWeight = INFINITY;
             int minIndex = -1;
 
-            std::cout << "number of branches = " << branches.size() << std::endl;
+            /* std::cout << "number of branches = " << branches.size() << std::endl; */
             // Find the branch with the minimum weight
             for (int i = 0; i < branches.size(); ++i) {
                 double weight = get_branch_weight(i);
@@ -286,7 +286,6 @@ namespace cartocrow::medial_axis {
                 }
             }
             if (minIndex == -1 || minWeight >= t * grid_size) {
-                std::cout << "Pruning finished" << std::endl;
                 return;
             }
             remove_branch(minIndex);
@@ -403,6 +402,7 @@ void MedialAxis::retract_end_branches(double retraction_percentage) {
                      
                     break;
                 } else {
+                    remove_vertex(medial_axis_graph, branches[j][i]);
                     retracted_length += segment_length;
                     last_index = i; 
                 }
@@ -596,15 +596,15 @@ void MedialAxis::compute_negatively_offset_polygon() {
 	
 void MedialAxis::compute_visibility_graph(std::list<Point<Inexact>> feature_points) {
     // extract the polygons from the polygon set
-    /* std::list<PolygonWithHoles<Inexact>> polygons;
-    region.polygons_with_holes(std::back_inserter(polygons)); */
+    std::list<PolygonWithHoles<Inexact>> polygons;
+    region.polygons_with_holes(std::back_inserter(polygons));
     
     for(auto p : feature_points) {
       for (auto q : feature_points) {
         if (p == q) continue;
         bool visible = true;
         Segment<Inexact> seg(p,q);
-        /* for (const PolygonWithHoles<Inexact>& pwh : polygons) {
+        for (const PolygonWithHoles<Inexact>& pwh : polygons) {
             const Polygon<Inexact> outer_boundary = pwh.outer_boundary();
 
             // iterate over edges in outer boundary
@@ -629,9 +629,30 @@ void MedialAxis::compute_visibility_graph(std::list<Point<Inexact>> feature_poin
         }
         if (visible) {
           add_edge(visibility_graph, p, q);
-        } */
+        }
       }
     }
   }
+  
+void MedialAxis::compute_path_backbone() {
+    std::set<Point<Inexact>> visited_points;
+    Point<Inexact> cur_point = (visibility_graph.begin())->first;
+    visited_points.insert(cur_point);
+    backbone.push_back(cur_point);
+    while (backbone.size() < visibility_graph.size()) {
+        Point<Inexact> next_point;
+        double dist = INFINITY;
+        for (Point<Inexact> p : visibility_graph[cur_point]) {
+            double new_dist = CGAL::squared_distance(p, cur_point);
+            if (new_dist < dist && !visited_points.contains(p)) {
+                dist = new_dist;
+                next_point = p;
+            }
+        }
+        visited_points.insert(next_point);
+        backbone.push_back(next_point);
+        cur_point = next_point;
+    }
+}
 
 } // namespace cartocrow::medial_axis

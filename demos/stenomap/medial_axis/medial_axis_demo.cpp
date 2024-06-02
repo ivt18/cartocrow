@@ -24,6 +24,8 @@
 #include "polygon_set_painting.h"
 #include "medial_axis_painting.h"
 #include "pruned_medial_axis_painting.h"
+#include "visibility_graph_painting.h"
+#include "backbone_painting.h"
 #include "grid_painting.h"
 #include "pruned_grid_painting.h"
 
@@ -62,51 +64,24 @@ StenomapDemo::StenomapDemo() {
     PolygonSet<Exact> polygonSet;
     std::vector<PolygonWithHoles<Exact>> polygons;
 
-    polygonSet = map["ESP"].shape;
-    polygons.clear();
-    polygonSet.polygons_with_holes(std::back_inserter(polygons));
-    double maxArea = 0;
-    // To get mainland Spain we get the biggest polygon from the set (instead of some random island)
-    for (const PolygonWithHoles<Exact> p : polygons) {
-        if (approximate(p.outer_boundary()).area() > maxArea) {
-            pgon = approximate(p.outer_boundary());
-            maxArea = pgon.area();
+    
+    const char* countries[4] = {"ESP", "FRA", "BGR", "ROU"};
+    for (int i = 0; i < 4; i++) {
+        polygonSet = map[countries[i]].shape;
+        polygons.clear();
+        polygonSet.polygons_with_holes(std::back_inserter(polygons));
+        double maxArea = 0;
+        // To get mainland Spain we get the biggest polygon from the set (instead of some random island)
+        for (const PolygonWithHoles<Exact> p : polygons) {
+            if (approximate(p.outer_boundary()).area() > maxArea) {
+                pgon = approximate(p.outer_boundary());
+                maxArea = pgon.area();
+            }
         }
+        // Simplifying polygon
+        pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
+        m_polygons.push_back(pgon);
     }
-
-    // Simplifying polygon
-    pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
-    /* m_polygons.push_back(pgon); */
-
-    polygonSet = map["FRA"].shape;
-    polygons.clear();
-    polygonSet.polygons_with_holes(std::back_inserter(polygons));
-    maxArea = 0;
-    // To get mainland France we get the biggest polygon from the set
-    for (const PolygonWithHoles<Exact> p : polygons) {
-        if (approximate(p.outer_boundary()).area() > maxArea) {
-            pgon = approximate(p.outer_boundary());
-            maxArea = pgon.area();
-        }
-    }
-    // Simplifying polygon
-    CGAL::Polyline_simplification_2::Stop_below_count_ratio_threshold stop2(0.5);
-    pgon = CGAL::Polyline_simplification_2::simplify(pgon, cost, stop);
-    /* m_polygons.push_back(pgon); */
-
-    Polygon<Inexact> polygon;
-    // Make simple polygon
-    polygon.push_back( Point<Inexact>(-1,-1) ) ;
-    /* polygon.push_back( Point<Inexact>(-4,-22) ) ; */
-    polygon.push_back( Point<Inexact>(0,-22) ) ;
-    polygon.push_back( Point<Inexact>(1,-1) ) ;
-    polygon.push_back( Point<Inexact>(32,0) ) ;
-    /* polygon.push_back( Point<Inexact>(32,20) ) ; */
-    polygon.push_back( Point<Inexact>(1,1) ) ;
-    polygon.push_back( Point<Inexact>(0,42) ) ;
-    polygon.push_back( Point<Inexact>(-1,1) ) ;
-    polygon.push_back( Point<Inexact>(-12,0) ) ;
-    m_polygons.push_back(polygon);
 
     for (Polygon<Inexact> polygon : m_polygons) {
         MedialAxis medial_axis(polygon);
@@ -129,6 +104,12 @@ StenomapDemo::StenomapDemo() {
         medial_axis.store_points_on_medial_axis();
         medial_axis.apply_modified_negative_offset(0.1, 0.01);
         //medial_axis.apply_modified_negative_offset(0.1, 0.01);
+        std::list<Point<Inexact>> feature_points;
+        for (auto const& x : medial_axis.get_graph()) {
+            feature_points.push_back(x.first);
+        }
+        medial_axis.compute_visibility_graph(feature_points);
+        medial_axis.compute_path_backbone();
  
         m_medialAxis.push_back(medial_axis);
     }
@@ -154,15 +135,19 @@ void StenomapDemo::recalculate() {
         // Draw polygon
         m_renderer->addPainting(std::make_shared<PolygonPainting>(PolygonPainting(m_polygons[i])), "Polygon " + index);
         // Draw medial axis
-        m_renderer->addPainting(std::make_shared<MedialAxisPainting>(m_medialAxisOld[i]), "Medial Axis" + index);
-        // Draw pruned medial axis
-        m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(m_medialAxis[i]), "Pruned medial Axis" + index);
+        /* m_renderer->addPainting(std::make_shared<MedialAxisPainting>(m_medialAxisOld[i]), "Medial Axis" + index); */
+        /* // Draw pruned medial axis */
+        /* m_renderer->addPainting(std::make_shared<PrunedMedialAxisPainting>(m_medialAxis[i]), "Pruned medial Axis" + index); */
         // Draw grid
-        m_renderer->addPainting(std::make_shared<GridPainting>(m_medialAxis[i]), "Grid" + index);
-        // Draw pruned grid
-        m_renderer->addPainting(std::make_shared<PrunedGridPainting>(m_medialAxis[i]), "Pruned grid" + index);
+        /* m_renderer->addPainting(std::make_shared<GridPainting>(m_medialAxis[i]), "Grid" + index); */
+        /* // Draw pruned grid */
+        /* m_renderer->addPainting(std::make_shared<PrunedGridPainting>(m_medialAxis[i]), "Pruned grid" + index); */
         // Draw new region
         m_renderer->addPainting(std::make_shared<PolygonSetPainting>(m_medialAxis[i].region), "Simplified polygon region");
+        // Draw vis graph
+        /* m_renderer->addPainting(std::make_shared<VisibilityGraphPainting>(m_medialAxis[i]), "Visibility graph " + index); */
+        // Draw backbone
+        m_renderer->addPainting(std::make_shared<BackbonePainting>(m_medialAxis[i]), "Backbone " + index);
     }
 }
 
